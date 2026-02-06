@@ -1,0 +1,1041 @@
+<!doctype html>
+<html lang="fr" data-theme="coreprobably">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panthères - Hockey</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="./output.css" rel="stylesheet" />
+  </head>
+  <body class="bg-base-200 min-h-screen">
+    <!-- Navbar -->
+    <div class="navbar bg-base-100 shadow-lg px-4">
+      <div class="flex-1">
+        <span class="text-lg sm:text-xl font-bold">Panthères</span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex justify-center mt-3 px-2">
+      <div role="tablist" class="tabs tabs-boxed bg-base-100 shadow w-full sm:w-auto">
+        <a
+          role="tab"
+          class="tab tab-active flex-1 sm:flex-none"
+          onclick="switchTab('equipe')"
+          id="tab-equipe"
+          >Équipe</a
+        >
+        <a
+          role="tab"
+          class="tab flex-1 sm:flex-none"
+          onclick="switchTab('presences')"
+          id="tab-presences"
+          >Présences</a
+        >
+      </div>
+    </div>
+
+    <!-- ==================== TAB ÉQUIPE ==================== -->
+    <div id="page-equipe" class="container mx-auto px-3 sm:px-4 py-3 max-w-5xl">
+      <!-- Messages importants (dynamique) -->
+      <div id="important-msg-display" class="mt-3 space-y-2"></div>
+
+      <!-- Formulaire message important -->
+      <div class="collapse collapse-arrow bg-base-100 shadow mt-3">
+        <input type="checkbox" />
+        <div class="collapse-title font-medium text-sm">
+          Publier un message important
+        </div>
+        <div class="collapse-content">
+          <div class="flex flex-col gap-3">
+            <div class="flex gap-2">
+              <div class="form-control">
+                <label class="label py-1"
+                  ><span class="label-text text-xs">Icone</span></label
+                >
+                <select
+                  id="important-msg-icon-select"
+                  class="select select-bordered select-sm w-full"
+                >
+                  <option value="warning">Warning</option>
+                  <option value="info">Info</option>
+                  <option value="success">Success</option>
+                  <option value="error">Erreur</option>
+                </select>
+              </div>
+              <div class="form-control flex-1">
+                <label class="label py-1"
+                  ><span class="label-text text-xs">Titre</span></label
+                >
+                <input
+                  type="text"
+                  id="important-msg-title-input"
+                  placeholder="Titre..."
+                  class="input input-bordered input-sm w-full"
+                />
+              </div>
+            </div>
+            <div class="form-control">
+              <label class="label py-1"
+                ><span class="label-text text-xs">Texte</span></label
+              >
+              <input
+                type="text"
+                id="important-msg-input"
+                placeholder="Contenu du message..."
+                class="input input-bordered input-sm w-full"
+              />
+            </div>
+            <button class="btn btn-error btn-sm w-full" onclick="saveImportantMsg()">
+              Publier
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Annonce système de présences -->
+      <div class="alert alert-info shadow-lg mt-3">
+        <div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            class="stroke-current flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            ></path>
+          </svg>
+          <div>
+            <h3 class="font-bold text-sm sm:text-base">Nouveau systeme de presences !</h3>
+            <p class="text-xs sm:text-sm">
+              Maintenant tout se passe sur <strong>Hockey Club</strong> ! Allez
+              sur l'app, appuyez sur vous en bas a gauche (pas D5 mais la
+              pastille avec votre photo) et vous verrez vos matchs et
+              entrainements.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendrier -->
+      <div class="card bg-base-100 shadow-xl mt-3">
+        <div class="card-body p-3 sm:p-6">
+          <h2 class="card-title text-lg sm:text-xl mb-3">Calendrier</h2>
+          <div class="w-full -mx-1">
+            <iframe
+              src="https://calendar.google.com/calendar/embed?height=600&wkst=2&ctz=Europe%2FBrussels&showTz=0&src=MWU4MTNkZjY0MmFkZWZmNWY4Y2Y5OTg3OGM3YzAyNjk4MWM3NWUzODkyYjJiY2YyNzMzMmI4ZWZkZjJiYzFjNEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t&color=%2333B679"
+              class="w-full border-0 rounded-lg"
+              height="400"
+              frameborder="0"
+              scrolling="no"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+
+      <!-- Présences - Règles -->
+      <div class="card bg-base-100 shadow-xl mt-3">
+        <div class="card-body p-3 sm:p-6">
+          <h2 class="card-title text-lg sm:text-xl mb-3">Presences</h2>
+          <p class="text-sm">
+            Si tu dois encore t'inscrire c'est
+            <a
+              href="https://static.twizzit.com/v2/public/form/fb607f5140322550109666feda694ce9"
+              target="_blank"
+              class="link link-primary"
+              >ici</a
+            >
+            et puis tu telecharges l'<a
+              href="https://apps.apple.com/be/app/hockey-belgium/id1413161236?l=fr-FR"
+              target="_blank"
+              class="link link-primary"
+              >app Hockey Belgium</a
+            >.
+          </p>
+
+          <div class="alert alert-warning mt-3">
+            <div>
+              <span class="text-sm"
+                >Il est <strong>indispensable</strong> de mettre ses
+                disponibilites sur l'application <em>Hockey Belgium</em> !</span
+              >
+            </div>
+          </div>
+
+          <p class="mt-2 text-xs sm:text-sm">
+            C'est super important parce que chercher du renfort ne se fait pas
+            en derniere minute et ca permet egalement d'adapter
+            l'entrainement...
+          </p>
+
+          <div class="bg-base-200 rounded-lg p-3 sm:p-4 mt-3">
+            <h3 class="font-bold mb-2 text-sm sm:text-base">Regles de selection</h3>
+            <ul class="list-disc list-inside space-y-1 text-xs sm:text-sm">
+              <li>
+                La selection se fait sur base des
+                <strong>3 derniers entrainements</strong>.
+              </li>
+              <li>
+                En cas d'egalite, on regarde les
+                <strong>5 derniers entrainements</strong>.
+              </li>
+              <li>
+                S'il y a encore egalite : priorite au
+                <strong>placement</strong>, puis au <strong>niveau</strong>.
+              </li>
+              <li>
+                Aucune excuse n'est prise en compte pour les absences : statut
+                etudiant, travail, blessure, maladie, etc.
+              </li>
+              <li>
+                Seuls les entrainements reellement et entierement suivis
+                comptent.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thunes -->
+      <div class="card bg-base-100 shadow-xl mt-3">
+        <div class="card-body p-3 sm:p-6">
+          <h2 class="card-title text-lg sm:text-xl mb-3">Thunes</h2>
+          <p class="text-xs sm:text-sm">
+            Le paiement de la cotisation sera fait en temps et en heure. Des
+            rappels seront faits.
+          </p>
+
+          <div class="alert mt-3">
+            <div>
+              <span class="text-sm"
+                ><strong>Tricount 2025 :</strong> a regler au plus tard fin juin
+                car un nouveau sera cree.</span
+              >
+            </div>
+          </div>
+
+          <div class="bg-base-200 rounded-lg p-3 sm:p-4 mt-3">
+            <h3 class="font-bold mb-2 text-sm sm:text-base">Compte commun Revolut</h3>
+            <p class="font-mono text-sm">Chloe Halloin</p>
+            <p class="font-mono text-sm font-bold">BE53 6502 6663 6253</p>
+          </div>
+
+          <p class="mt-3 text-xs sm:text-sm">
+            Chaque joueuse verse <strong>34 EUR</strong> en debut de saison pour
+            couvrir les boissons offertes aux adversaires. Le paiement des
+            arbitres se fait aussi via le compte commun.
+          </p>
+        </div>
+      </div>
+
+      <!-- Équipement -->
+      <div class="card bg-base-100 shadow-xl mt-3">
+        <div class="card-body p-3 sm:p-6">
+          <h2 class="card-title text-lg sm:text-xl mb-3">Equipement</h2>
+          <p class="text-xs sm:text-sm">
+            Le maillot vert du club, les chaussettes et la jupe bleu marine sont
+            <strong>obligatoires</strong>. Si tu ne les as pas encore commandes,
+            n'oublie pas de regarder si ton numero est disponible.
+          </p>
+        </div>
+      </div>
+
+      <!-- Arbitrage -->
+      <div class="card bg-base-100 shadow-xl mt-3">
+        <div class="card-body p-3 sm:p-6">
+          <h2 class="card-title text-lg sm:text-xl mb-3">Arbitrage</h2>
+
+          <!-- Tableau calendrier arbitres -->
+          <div class="overflow-x-auto -mx-3 sm:mx-0">
+            <table
+              class="table table-xs sm:table-sm table-zebra"
+              id="referee-calendar-table"
+            >
+              <thead id="referee-calendar-head"></thead>
+              <tbody id="referee-calendar-body"></tbody>
+            </table>
+          </div>
+
+          <!-- Formulaire ajout arbitre -->
+          <div class="flex flex-col gap-2 mt-4">
+            <div class="flex gap-2">
+              <div class="form-control flex-1">
+                <label class="label py-1"
+                  ><span class="label-text text-xs">Date</span></label
+                >
+                <select
+                  id="referee-date"
+                  class="select select-bordered select-sm w-full"
+                ></select>
+              </div>
+              <div class="form-control flex-1">
+                <label class="label py-1"
+                  ><span class="label-text text-xs">Telephone</span></label
+                >
+                <input
+                  type="tel"
+                  id="referee-phone"
+                  placeholder="+32..."
+                  class="input input-bordered input-sm w-full"
+                />
+              </div>
+            </div>
+            <div class="form-control">
+              <label class="label py-1"
+                ><span class="label-text text-xs">Nom</span></label
+              >
+              <input
+                type="text"
+                id="referee-name"
+                placeholder="Nom de l'arbitre"
+                class="input input-bordered input-sm w-full"
+              />
+            </div>
+            <button class="btn btn-primary btn-sm w-full" onclick="addReferee()">
+              Ajouter
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="card bg-base-100 shadow-xl mt-3 mb-6">
+        <div class="card-body p-3 sm:p-6">
+          <h2 class="card-title text-lg sm:text-xl mb-3">Notes</h2>
+          <div id="notes-list" class="space-y-2"></div>
+          <div class="flex gap-2 items-end mt-3">
+            <div class="form-control flex-1">
+              <input
+                type="text"
+                id="note-input"
+                placeholder="Ajouter une note..."
+                class="input input-bordered input-sm w-full"
+              />
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="addNote()">
+              Ajouter
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB PRÉSENCES ==================== -->
+    <div id="page-presences" class="container mx-auto px-3 sm:px-4 py-3 max-w-6xl hidden">
+      <!-- Section: Gestion des joueuses -->
+      <div class="card bg-base-100 shadow-xl mt-3">
+        <div class="card-body p-3 sm:p-6">
+          <h2 class="card-title text-lg sm:text-xl mb-3">Gestion des joueuses</h2>
+
+          <!-- Formulaire ajout -->
+          <div class="flex gap-2 items-end mb-4">
+            <div class="form-control flex-1">
+              <label class="label py-1"><span class="label-text text-sm">Nom</span></label>
+              <input
+                type="text"
+                id="player-name"
+                placeholder="Nom de la joueuse"
+                class="input input-bordered input-sm w-full"
+              />
+            </div>
+            <div class="form-control w-16">
+              <label class="label py-1"><span class="label-text text-sm">N°</span></label>
+              <input
+                type="number"
+                id="player-number"
+                placeholder="N°"
+                class="input input-bordered input-sm w-full"
+                min="1"
+              />
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="addPlayer()">
+              Ajouter
+            </button>
+          </div>
+
+          <!-- Tableau joueuses -->
+          <div class="overflow-x-auto -mx-3 sm:mx-0">
+            <table class="table table-zebra table-xs sm:table-sm">
+              <thead>
+                <tr>
+                  <th>N°</th>
+                  <th>Nom</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="players-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Enregistrer les présences -->
+      <div class="card bg-base-100 shadow-xl mt-3">
+        <div class="card-body p-3 sm:p-6">
+          <h2 class="card-title text-lg sm:text-xl mb-3">Enregistrer les présences</h2>
+          <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 items-stretch sm:items-end mb-4">
+            <div class="form-control">
+              <label class="label py-1"
+                ><span class="label-text text-sm">Date de l'entraînement</span></label
+              >
+              <input
+                type="date"
+                id="training-date"
+                class="input input-bordered input-sm w-full"
+              />
+            </div>
+            <div class="flex gap-2">
+              <button class="btn btn-sm flex-1 sm:flex-none" onclick="selectAllTraining()">
+                Tout cocher
+              </button>
+              <button class="btn btn-sm flex-1 sm:flex-none" onclick="deselectAllTraining()">
+                Tout décocher
+              </button>
+            </div>
+          </div>
+          <div
+            id="training-checklist"
+            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1 sm:gap-2 mb-4"
+          ></div>
+          <button class="btn btn-primary w-full sm:w-auto" onclick="saveTraining()">
+            Enregistrer l'entraînement
+          </button>
+        </div>
+      </div>
+
+      <!-- Section: Tableau des présences -->
+      <div class="card bg-base-100 shadow-xl mt-3">
+        <div class="card-body p-3 sm:p-6">
+          <h2 class="card-title text-lg sm:text-xl mb-3">Tableau des présences</h2>
+          <div class="overflow-x-auto -mx-3 sm:mx-0">
+            <table class="table table-xs table-pin-rows table-pin-cols">
+              <thead id="presence-table-head"></thead>
+              <tbody id="presence-table-body"></tbody>
+            </table>
+          </div>
+          <div
+            id="no-training-msg"
+            class="text-center text-base-content/60 py-4 hidden text-sm"
+          >
+            Aucun entraînement enregistré.
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Générer feuille de match -->
+      <div class="card bg-base-100 shadow-xl mt-3">
+        <div class="card-body p-3 sm:p-6">
+          <h2 class="card-title text-lg sm:text-xl mb-3">Générer la feuille de match</h2>
+          <p class="text-xs sm:text-sm text-base-content/60 mb-3">
+            Coche les joueuses disponibles pour le match. La selection
+            automatique prendra max 16 joueuses selon les regles : presences sur
+            les 3 derniers entrainements, puis 5.
+          </p>
+          <div
+            id="match-checklist"
+            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1 sm:gap-2 mb-3"
+          ></div>
+          <div class="flex gap-2">
+            <button class="btn btn-sm flex-1 sm:flex-none" onclick="selectAllMatch()">
+              Toutes disponibles
+            </button>
+            <button class="btn btn-sm flex-1 sm:flex-none" onclick="deselectAllMatch()">
+              Aucune
+            </button>
+          </div>
+          <div class="mt-4">
+            <button
+              class="btn btn-accent w-full sm:btn-lg sm:w-auto"
+              onclick="generateMatchSheet()"
+            >
+              Générer la feuille de match
+            </button>
+          </div>
+
+          <!-- Feuille de match générée -->
+          <div id="match-sheet" class="hidden mt-6">
+            <div class="divider text-sm">FEUILLE DE MATCH</div>
+            <div
+              id="match-sheet-date"
+              class="text-center font-bold text-base sm:text-lg mb-4"
+            ></div>
+            <div class="overflow-x-auto -mx-3 sm:mx-0">
+              <table class="table table-xs sm:table-sm table-zebra">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>N°</th>
+                    <th>Nom</th>
+                    <th class="text-center">3 dern.</th>
+                    <th class="text-center">5 dern.</th>
+                  </tr>
+                </thead>
+                <tbody id="match-sheet-body"></tbody>
+              </table>
+            </div>
+            <div id="match-sheet-excluded" class="mt-3"></div>
+            <button
+              class="btn btn-outline btn-sm w-full sm:w-auto mt-3"
+              onclick="printMatchSheet()"
+            >
+              Imprimer
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Supprimer un entraînement -->
+      <div class="card bg-base-100 shadow-xl mt-3 mb-6">
+        <div class="card-body p-3 sm:p-6">
+          <h2 class="card-title text-lg sm:text-xl mb-3">Gérer les entraînements</h2>
+          <div id="trainings-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ===================== API HELPERS =====================
+      async function apiGet(action) {
+        const res = await fetch("api.php?action=" + action);
+        return res.json();
+      }
+
+      async function apiPost(action, data) {
+        const res = await fetch("api.php?action=" + action, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        return res.json();
+      }
+
+      // ===================== TAB SWITCHING =====================
+      function switchTab(tab) {
+        document
+          .getElementById("page-equipe")
+          .classList.toggle("hidden", tab !== "equipe");
+        document
+          .getElementById("page-presences")
+          .classList.toggle("hidden", tab !== "presences");
+        document
+          .getElementById("tab-equipe")
+          .classList.toggle("tab-active", tab === "equipe");
+        document
+          .getElementById("tab-presences")
+          .classList.toggle("tab-active", tab === "presences");
+      }
+
+      // ===================== PLAYER MANAGEMENT =====================
+      async function addPlayer() {
+        const name = document.getElementById("player-name").value.trim();
+        const number = document.getElementById("player-number").value.trim();
+        if (!name) {
+          alert("Veuillez entrer un nom.");
+          return;
+        }
+        await apiPost("add_player", { name, number: number || "" });
+        document.getElementById("player-name").value = "";
+        document.getElementById("player-number").value = "";
+        await renderAll();
+      }
+
+      async function deletePlayer(id) {
+        if (!confirm("Supprimer cette joueuse ?")) return;
+        await apiPost("delete_player", { id });
+        await renderAll();
+      }
+
+      async function renderPlayersTable() {
+        const players = await apiGet("get_players");
+        const tbody = document.getElementById("players-table-body");
+        tbody.innerHTML = players
+          .map(
+            (p) => `
+          <tr>
+            <td class="font-bold">${p.number ? escapeHtml(p.number) : "-"}</td>
+            <td class="font-medium">${escapeHtml(p.name)}</td>
+            <td><button class="btn btn-error btn-xs" onclick="deletePlayer(${p.id})">Supprimer</button></td>
+          </tr>
+        `,
+          )
+          .join("");
+        return players;
+      }
+
+      // ===================== TRAINING ATTENDANCE =====================
+      function renderTrainingChecklistFromData(players) {
+        const container = document.getElementById("training-checklist");
+        container.innerHTML = players
+          .map(
+            (p) => `
+          <label class="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-base-200 active:bg-base-300">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-primary training-check" data-player-id="${p.id}">
+            <span class="text-xs sm:text-sm">${escapeHtml(p.name)}</span>
+          </label>
+        `,
+          )
+          .join("");
+        const dateInput = document.getElementById("training-date");
+        if (!dateInput.value) {
+          dateInput.value = new Date().toISOString().split("T")[0];
+        }
+      }
+
+      function selectAllTraining() {
+        document
+          .querySelectorAll(".training-check")
+          .forEach((cb) => (cb.checked = true));
+      }
+
+      function deselectAllTraining() {
+        document
+          .querySelectorAll(".training-check")
+          .forEach((cb) => (cb.checked = false));
+      }
+
+      async function saveTraining() {
+        const date = document.getElementById("training-date").value;
+        if (!date) {
+          alert("Veuillez sélectionner une date.");
+          return;
+        }
+        const presentIds = [];
+        document.querySelectorAll(".training-check:checked").forEach((cb) => {
+          presentIds.push(parseInt(cb.dataset.playerId));
+        });
+        await apiPost("save_training", { date, presentIds });
+        deselectAllTraining();
+        document.getElementById("training-date").value = new Date()
+          .toISOString()
+          .split("T")[0];
+        await renderAll();
+        alert("Entraînement enregistré !");
+      }
+
+      // ===================== PRESENCE TABLE =====================
+      function renderPresenceTableFromData(players, trainings) {
+        const thead = document.getElementById("presence-table-head");
+        const tbody = document.getElementById("presence-table-body");
+        const noMsg = document.getElementById("no-training-msg");
+
+        if (trainings.length === 0) {
+          thead.innerHTML = "";
+          tbody.innerHTML = "";
+          noMsg.classList.remove("hidden");
+          return;
+        }
+        noMsg.classList.add("hidden");
+
+        thead.innerHTML = `<tr>
+          <th class="bg-base-100">Joueuse</th>
+          ${trainings.map((t) => `<th class="text-center text-xs">${formatDate(t.date)}</th>`).join("")}
+          <th class="text-center bg-base-100">Total</th>
+        </tr>`;
+
+        tbody.innerHTML = players
+          .map((p) => {
+            const pid = String(p.id);
+            const total = trainings.filter((t) =>
+              t.presentIds.includes(pid),
+            ).length;
+            return `<tr>
+            <th class="bg-base-100 text-xs sm:text-sm whitespace-nowrap">${escapeHtml(p.name)}</th>
+            ${trainings
+              .map((t) => {
+                const present = t.presentIds.includes(pid);
+                return `<td class="text-center">${
+                  present
+                    ? '<span class="text-success font-bold">&#10003;</span>'
+                    : '<span class="text-error">&#10007;</span>'
+                }</td>`;
+              })
+              .join("")}
+            <td class="text-center font-bold bg-base-100">${total}/${trainings.length}</td>
+          </tr>`;
+          })
+          .join("");
+      }
+
+      // ===================== TRAININGS LIST =====================
+      function renderTrainingsListFromData(trainings) {
+        const container = document.getElementById("trainings-list");
+        if (trainings.length === 0) {
+          container.innerHTML =
+            '<p class="text-base-content/60 text-sm">Aucun entraînement.</p>';
+          return;
+        }
+        container.innerHTML = trainings
+          .map(
+            (t) => `
+          <div class="flex items-center justify-between py-2 border-b border-base-200 last:border-0">
+            <span class="text-xs sm:text-sm">${formatDate(t.date)} — ${t.presentIds.length} présente(s)</span>
+            <button class="btn btn-error btn-xs" onclick="deleteTraining(${t.id})">Supprimer</button>
+          </div>
+        `,
+          )
+          .join("");
+      }
+
+      async function deleteTraining(id) {
+        if (!confirm("Supprimer cet entraînement ?")) return;
+        await apiPost("delete_training", { id });
+        await renderAll();
+      }
+
+      // ===================== MATCH SHEET GENERATION =====================
+      function renderMatchChecklistFromData(players) {
+        const container = document.getElementById("match-checklist");
+        container.innerHTML = players
+          .map(
+            (p) => `
+          <label class="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-base-200 active:bg-base-300">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-accent match-check" data-player-id="${p.id}" checked>
+            <span class="text-xs sm:text-sm">${escapeHtml(p.name)}</span>
+          </label>
+        `,
+          )
+          .join("");
+      }
+
+      function selectAllMatch() {
+        document
+          .querySelectorAll(".match-check")
+          .forEach((cb) => (cb.checked = true));
+      }
+
+      function deselectAllMatch() {
+        document
+          .querySelectorAll(".match-check")
+          .forEach((cb) => (cb.checked = false));
+      }
+
+      async function generateMatchSheet() {
+        const [players, trainings] = await Promise.all([
+          apiGet("get_players"),
+          apiGet("get_trainings"),
+        ]);
+
+        const availableIds = [];
+        document.querySelectorAll(".match-check:checked").forEach((cb) => {
+          availableIds.push(String(cb.dataset.playerId));
+        });
+
+        const availablePlayers = players.filter((p) =>
+          availableIds.includes(String(p.id)),
+        );
+        if (availablePlayers.length === 0) {
+          alert("Aucune joueuse sélectionnée.");
+          return;
+        }
+
+        const scored = availablePlayers.map((p) => {
+          const pid = String(p.id);
+          const recent3 = trainings.slice(-3);
+          const recent5 = trainings.slice(-5);
+          const pres3 = recent3.filter((t) =>
+            t.presentIds.includes(pid),
+          ).length;
+          const pres5 = recent5.filter((t) =>
+            t.presentIds.includes(pid),
+          ).length;
+          return { ...p, pres3, pres5 };
+        });
+
+        scored.sort((a, b) => {
+          if (b.pres3 !== a.pres3) return b.pres3 - a.pres3;
+          if (b.pres5 !== a.pres5) return b.pres5 - a.pres5;
+          return a.name.localeCompare(b.name);
+        });
+
+        const selected = scored.slice(0, 16);
+        const excluded = scored.slice(16);
+
+        const sheetDiv = document.getElementById("match-sheet");
+        sheetDiv.classList.remove("hidden");
+
+        document.getElementById("match-sheet-date").textContent =
+          "Match du " +
+          new Date().toLocaleDateString("fr-BE", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+
+        document.getElementById("match-sheet-body").innerHTML = selected
+          .map(
+            (p, i) => `
+          <tr>
+            <td class="font-bold">${i + 1}</td>
+            <td class="font-bold">${p.number ? escapeHtml(p.number) : "-"}</td>
+            <td class="font-medium">${escapeHtml(p.name)}</td>
+            <td class="text-center">${p.pres3}/${Math.min(3, trainings.length)}</td>
+            <td class="text-center">${p.pres5}/${Math.min(5, trainings.length)}</td>
+          </tr>
+        `,
+          )
+          .join("");
+
+        const excludedDiv = document.getElementById("match-sheet-excluded");
+        if (excluded.length > 0) {
+          excludedDiv.innerHTML = `
+            <div class="alert alert-warning text-xs sm:text-sm">
+              <span><strong>Non sélectionnées (${excluded.length}) :</strong> ${excluded.map((p) => escapeHtml(p.name)).join(", ")}</span>
+            </div>`;
+        } else {
+          excludedDiv.innerHTML = "";
+        }
+
+        sheetDiv.scrollIntoView({ behavior: "smooth" });
+      }
+
+      function printMatchSheet() {
+        window.print();
+      }
+
+      // ===================== UTILITIES =====================
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      function formatDate(dateStr) {
+        const d = new Date(dateStr + "T00:00:00");
+        return d.toLocaleDateString("fr-BE", {
+          day: "2-digit",
+          month: "2-digit",
+        });
+      }
+
+      // ===================== IMPORTANT MESSAGE =====================
+      const MSG_ICONS = {
+        warning: { emoji: "\u26A0\uFE0F", alertClass: "alert-warning" },
+        info: { emoji: "\u2139\uFE0F", alertClass: "alert-info" },
+        success: { emoji: "\u2705", alertClass: "alert-success" },
+        error: { emoji: "\uD83D\uDEA8", alertClass: "alert-error" },
+      };
+
+      async function saveImportantMsg() {
+        const title = document
+          .getElementById("important-msg-title-input")
+          .value.trim();
+        const text = document
+          .getElementById("important-msg-input")
+          .value.trim();
+        const icon = document.getElementById("important-msg-icon-select").value;
+        if (!title && !text) return;
+        await apiPost("save_important_msg", { title, text, icon });
+        document.getElementById("important-msg-title-input").value = "";
+        document.getElementById("important-msg-input").value = "";
+        await renderImportantMsg();
+      }
+
+      async function removeImportantMsg(id) {
+        await apiPost("delete_important_msg", { id });
+        await renderImportantMsg();
+      }
+
+      async function renderImportantMsg() {
+        const messages = await apiGet("get_important_msg");
+        const display = document.getElementById("important-msg-display");
+        if (!messages || messages.length === 0) {
+          display.innerHTML = "";
+          return;
+        }
+        display.innerHTML = messages
+          .map((m) => {
+            const cfg = MSG_ICONS[m.icon] || MSG_ICONS.warning;
+            return `<div class="alert shadow-lg ${cfg.alertClass} relative">
+              <div>
+                <span class="text-xl sm:text-2xl flex-shrink-0">${cfg.emoji}</span>
+                <div>
+                  <h3 class="font-bold text-sm sm:text-base">${m.title || ""}</h3>
+                  <p class="text-xs sm:text-sm">${m.text || ""}</p>
+                </div>
+              </div>
+              <button class="btn btn-ghost btn-xs absolute top-2 right-2" onclick="removeImportantMsg(${m.id})">X</button>
+            </div>`;
+          })
+          .join("");
+      }
+
+      // ===================== NOTES =====================
+      async function addNote() {
+        const input = document.getElementById("note-input");
+        const text = input.value.trim();
+        if (!text) return;
+        await apiPost("add_note", { text });
+        input.value = "";
+        await renderNotes();
+      }
+
+      async function deleteNote(id) {
+        await apiPost("delete_note", { id });
+        await renderNotes();
+      }
+
+      async function renderNotes() {
+        const notes = await apiGet("get_notes");
+        const container = document.getElementById("notes-list");
+        if (notes.length === 0) {
+          container.innerHTML =
+            '<p class="text-sm text-base-content/60">Aucune note.</p>';
+          return;
+        }
+        container.innerHTML = notes
+          .map(
+            (n) => `
+          <div class="flex items-center justify-between bg-base-200 rounded-lg px-3 py-2">
+            <span class="text-xs sm:text-sm">${escapeHtml(n.text)}</span>
+            <button class="btn btn-ghost btn-xs ml-2 flex-shrink-0" onclick="deleteNote(${n.id})">X</button>
+          </div>
+        `,
+          )
+          .join("");
+      }
+
+      // ===================== REFEREES =====================
+      const MATCH_DATES = [
+        "2025-03-08",
+        "2025-03-22",
+        "2025-04-05",
+        "2025-04-12",
+        "2025-04-19",
+        "2025-05-24",
+      ];
+
+      async function addReferee() {
+        const date = document.getElementById("referee-date").value;
+        const name = document.getElementById("referee-name").value.trim();
+        const phone = document.getElementById("referee-phone").value.trim();
+        if (!date || !name) {
+          alert("Veuillez entrer une date et un nom.");
+          return;
+        }
+        const result = await apiPost("add_referee", {
+          date,
+          name,
+          phone: phone || "",
+        });
+        if (result.error) {
+          alert(result.error);
+          return;
+        }
+        document.getElementById("referee-name").value = "";
+        document.getElementById("referee-phone").value = "";
+        await renderReferees();
+      }
+
+      async function deleteReferee(id) {
+        await apiPost("delete_referee", { id });
+        await renderReferees();
+      }
+
+      function formatMatchDate(dateStr) {
+        const d = new Date(dateStr + "T00:00:00");
+        return d
+          .toLocaleDateString("fr-BE", { day: "numeric", month: "short" })
+          .replace(".", "");
+      }
+
+      async function renderReferees() {
+        const referees = await apiGet("get_referees");
+        const byDate = {};
+        referees.forEach((r) => {
+          if (!byDate[r.date]) byDate[r.date] = [];
+          byDate[r.date].push(r);
+        });
+
+        document.getElementById("referee-calendar-head").innerHTML =
+          "<tr><th></th>" +
+          MATCH_DATES.map(
+            (d) => `<th class="text-center text-xs">${formatMatchDate(d)}</th>`,
+          ).join("") +
+          "</tr>";
+
+        let rows = "";
+        for (let i = 0; i < 2; i++) {
+          rows += '<tr><td class="font-medium text-xs whitespace-nowrap">Arb. ' + (i + 1) + "</td>";
+          MATCH_DATES.forEach((date) => {
+            const refs = byDate[date] || [];
+            const ref = refs[i];
+            if (ref) {
+              const phoneLink = ref.phone
+                ? '<br><a href="tel:' +
+                  escapeHtml(ref.phone) +
+                  '" class="link link-primary text-xs">' +
+                  escapeHtml(ref.phone) +
+                  "</a>"
+                : "";
+              rows += `<td class="text-center text-xs">${escapeHtml(ref.name)}${phoneLink} <button class="btn btn-ghost btn-xs" onclick="deleteReferee(${ref.id})">x</button></td>`;
+            } else {
+              rows += '<td class="text-center text-base-content/30">-</td>';
+            }
+          });
+          rows += "</tr>";
+        }
+        document.getElementById("referee-calendar-body").innerHTML = rows;
+
+        const select = document.getElementById("referee-date");
+        const currentVal = select.value;
+        select.innerHTML =
+          '<option value="" disabled selected>Choisir...</option>' +
+          MATCH_DATES.map((d) => {
+            const count = (byDate[d] || []).length;
+            const full = count >= 2;
+            return `<option value="${d}" ${full ? "disabled" : ""}>${formatMatchDate(d)}${full ? " (complet)" : ""}</option>`;
+          }).join("");
+        if (
+          currentVal &&
+          select.querySelector(`option[value="${currentVal}"]:not([disabled])`)
+        ) {
+          select.value = currentVal;
+        }
+      }
+
+      // ===================== RENDER ALL =====================
+      async function renderAll() {
+        const [players, trainings] = await Promise.all([
+          apiGet("get_players"),
+          apiGet("get_trainings"),
+        ]);
+
+        // Render with fetched data
+        const tbody = document.getElementById("players-table-body");
+        tbody.innerHTML = players
+          .map(
+            (p) => `
+          <tr>
+            <td class="font-bold">${p.number ? escapeHtml(p.number) : "-"}</td>
+            <td class="font-medium">${escapeHtml(p.name)}</td>
+            <td><button class="btn btn-error btn-xs" onclick="deletePlayer(${p.id})">Supprimer</button></td>
+          </tr>
+        `,
+          )
+          .join("");
+
+        renderTrainingChecklistFromData(players);
+        renderPresenceTableFromData(players, trainings);
+        renderMatchChecklistFromData(players);
+        renderTrainingsListFromData(trainings);
+
+        // These fetch their own data
+        await Promise.all([
+          renderImportantMsg(),
+          renderNotes(),
+          renderReferees(),
+        ]);
+      }
+
+      // ===================== INIT =====================
+      document.addEventListener("DOMContentLoaded", renderAll);
+    </script>
+  </body>
+</html>
