@@ -14,7 +14,7 @@ switch ($action) {
 
     // ===================== PLAYERS =====================
     case 'get_players':
-        $stmt = $pdo->query('SELECT id, name, number FROM players ORDER BY name');
+        $stmt = $pdo->query('SELECT id, name, number, position_1, position_2, position_3, level FROM players ORDER BY name');
         echo json_encode($stmt->fetchAll());
         break;
 
@@ -35,6 +35,36 @@ switch ($action) {
         $id = (int)($input['id'] ?? 0);
         $stmt = $pdo->prepare('DELETE FROM players WHERE id = ?');
         $stmt->execute([$id]);
+        echo json_encode(['ok' => true]);
+        break;
+
+    case 'update_player_details':
+        $id = (int)($input['id'] ?? 0);
+        $pos1 = $input['position_1'] ?? null;
+        $pos2 = $input['position_2'] ?? null;
+        $pos3 = $input['position_3'] ?? null;
+        $level = (int)($input['level'] ?? 2);
+
+        $validPositions = ['gardienne', 'defense_centrale', 'defense_laterale', 'milieu_centre', 'milieu_aile', 'attaquante_centre', 'attaquante_aile', null, ''];
+        foreach ([$pos1, $pos2, $pos3] as $p) {
+            if (!in_array($p, $validPositions)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Position invalide']);
+                break 2;
+            }
+        }
+        if ($level < 1 || $level > 3) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Niveau invalide (1-3)']);
+            break;
+        }
+
+        $pos1 = $pos1 === '' ? null : $pos1;
+        $pos2 = $pos2 === '' ? null : $pos2;
+        $pos3 = $pos3 === '' ? null : $pos3;
+
+        $stmt = $pdo->prepare('UPDATE players SET position_1 = ?, position_2 = ?, position_3 = ?, level = ? WHERE id = ?');
+        $stmt->execute([$pos1, $pos2, $pos3, $level, $id]);
         echo json_encode(['ok' => true]);
         break;
 
@@ -171,6 +201,52 @@ switch ($action) {
         $stmt = $pdo->prepare('DELETE FROM referees WHERE id = ?');
         $stmt->execute([$id]);
         echo json_encode(['ok' => true]);
+        break;
+
+    // ===================== COACH PASSWORD =====================
+    case 'verify_coach_password':
+        $password = $input['password'] ?? '';
+        $stored = '111';
+        try {
+            $stmt = $pdo->prepare('SELECT value FROM settings WHERE `key` = ?');
+            $stmt->execute(['coach_password']);
+            $row = $stmt->fetchColumn();
+            if ($row !== false) $stored = $row;
+        } catch (Exception $e) {
+            // Table settings n'existe pas encore, utiliser le defaut
+        }
+        echo json_encode(['ok' => $password === $stored]);
+        break;
+
+    case 'change_coach_password':
+        $oldPassword = $input['old_password'] ?? '';
+        $newPassword = $input['new_password'] ?? '';
+        if ($newPassword === '') {
+            http_response_code(400);
+            echo json_encode(['error' => 'Nouveau mot de passe requis']);
+            break;
+        }
+        $stored = '111';
+        try {
+            $stmt = $pdo->prepare('SELECT value FROM settings WHERE `key` = ?');
+            $stmt->execute(['coach_password']);
+            $row = $stmt->fetchColumn();
+            if ($row !== false) $stored = $row;
+        } catch (Exception $e) {}
+        if ($oldPassword !== $stored) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Ancien mot de passe incorrect']);
+            break;
+        }
+        try {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS settings (`key` VARCHAR(50) PRIMARY KEY, value TEXT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+            $stmt = $pdo->prepare('INSERT INTO settings (`key`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?');
+            $stmt->execute(['coach_password', $newPassword, $newPassword]);
+            echo json_encode(['ok' => true]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Erreur serveur']);
+        }
         break;
 
     default:

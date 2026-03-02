@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="fr" data-theme="alphahouse">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pantheres - Coach</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link href="./output.css" rel="stylesheet" />
+  </head>
+  <body class="bg-base-200 min-h-screen">
+    <!-- ==================== ECRAN MOT DE PASSE ==================== -->
+    <div id="lock-screen" class="min-h-screen flex items-center justify-center p-4">
+      <div class="card bg-base-100 shadow-xl w-full max-w-sm">
+        <div class="card-body items-center text-center">
+          <h2 class="card-title text-xl mb-2">Page Coach</h2>
+          <p class="text-sm text-base-content/60 mb-4">Entrez le mot de passe pour acceder a cette page.</p>
+          <input type="password" id="password-input" class="input input-bordered w-full" placeholder="Mot de passe" onkeydown="if(event.key==='Enter') verifyPassword()" />
+          <p id="password-error" class="text-error text-sm mt-1 hidden">Mot de passe incorrect</p>
+          <button class="btn btn-primary w-full mt-3" onclick="verifyPassword()">Entrer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CONTENU COACH (caché) ==================== -->
+    <div id="coach-content" class="hidden">
+      <div class="navbar bg-base-100 shadow-lg px-4">
+        <div class="flex-1">
+          <span class="text-lg sm:text-xl font-bold">Coach</span>
+        </div>
+        <button class="btn btn-ghost btn-sm text-xs sm:text-sm" onclick="toggleChangePassword()">🔒 Mot de passe</button>
+      </div>
+
+      <div class="container mx-auto px-3 sm:px-4 py-3 max-w-5xl">
+        <!-- Changer mot de passe -->
+        <div id="change-password-section" class="hidden">
+          <div class="card bg-base-100 shadow-xl mt-3">
+            <div class="card-body p-3 sm:p-6">
+              <h2 class="card-title text-lg sm:text-xl mb-3">Changer le mot de passe</h2>
+              <div class="flex flex-col gap-2 max-w-sm">
+                <input type="password" id="old-password" class="input input-bordered input-sm" placeholder="Ancien mot de passe" />
+                <input type="password" id="new-password" class="input input-bordered input-sm" placeholder="Nouveau mot de passe" />
+                <input type="password" id="confirm-password" class="input input-bordered input-sm" placeholder="Confirmer le nouveau mot de passe" />
+                <p id="change-password-error" class="text-error text-sm hidden"></p>
+                <p id="change-password-success" class="text-success text-sm hidden">Mot de passe change avec succes !</p>
+                <button class="btn btn-primary btn-sm" onclick="changePassword()">Confirmer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Position & Niveau -->
+        <div class="card bg-base-100 shadow-xl mt-3">
+          <div class="card-body p-3 sm:p-6">
+            <h2 class="card-title text-lg sm:text-xl mb-3">
+              Position & Niveau des joueuses
+            </h2>
+            <p class="text-xs sm:text-sm text-base-content/60 mb-4">
+              Pos. 1 = preferee, Pos. 2 = plan B, Pos. 3 = plan C.
+              Niveau : 1 (fort) a 3 (faible).
+              Sauvegarde automatique.
+            </p>
+            <div id="coach-players-list" class="space-y-3"></div>
+          </div>
+        </div>
+
+        <!-- Gerer les entrainements -->
+        <div class="card bg-base-100 shadow-xl mt-3 mb-6">
+          <div class="card-body p-3 sm:p-6">
+            <h2 class="card-title text-lg sm:text-xl mb-3">
+              Gerer les entrainements
+            </h2>
+            <div id="trainings-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      async function apiGet(action) {
+        const res = await fetch("api.php?action=" + action);
+        return res.json();
+      }
+
+      async function apiPost(action, data) {
+        const res = await fetch("api.php?action=" + action, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        return res.json();
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      function formatDate(dateStr) {
+        const d = new Date(dateStr + "T00:00:00");
+        return d.toLocaleDateString("fr-BE", {
+          day: "2-digit",
+          month: "2-digit",
+        });
+      }
+
+      const POSITIONS = [
+        { value: "", label: "-- Aucune --" },
+        { value: "gardienne", label: "Gardienne" },
+        { value: "defense_centrale", label: "Def. centrale" },
+        { value: "defense_laterale", label: "Def. laterale" },
+        { value: "milieu_centre", label: "Milieu centre" },
+        { value: "milieu_aile", label: "Milieu aile" },
+        { value: "attaquante_centre", label: "Att. centre" },
+        { value: "attaquante_aile", label: "Att. aile" },
+      ];
+
+      const LEVELS = [
+        { value: 1, label: "1 (Fort)" },
+        { value: 2, label: "2 (Moyen)" },
+        { value: 3, label: "3 (Faible)" },
+      ];
+
+      function buildOptions(list, selectedValue) {
+        return list
+          .map(
+            (opt) =>
+              `<option value="${opt.value}" ${String(selectedValue) === String(opt.value) ? "selected" : ""}>${opt.label}</option>`,
+          )
+          .join("");
+      }
+
+      // ===================== COACH PLAYERS =====================
+      function renderCoachTable(players) {
+        const container = document.getElementById("coach-players-list");
+        container.innerHTML = players
+          .map(
+            (p) => `
+          <div id="player-row-${p.id}" class="border border-base-300 rounded-lg p-3 transition-colors">
+            <div class="font-bold text-sm mb-2">#${p.number ? escapeHtml(p.number) : "-"} — ${escapeHtml(p.name)}</div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-xs text-base-content/60">Pos. 1 (preferee)</label>
+                <select class="select select-bordered select-sm w-full" id="pos1-${p.id}" onchange="savePlayer(${p.id})">
+                  ${buildOptions(POSITIONS, p.position_1 || "")}
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-base-content/60">Pos. 2 (plan B)</label>
+                <select class="select select-bordered select-sm w-full" id="pos2-${p.id}" onchange="savePlayer(${p.id})">
+                  ${buildOptions(POSITIONS, p.position_2 || "")}
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-base-content/60">Pos. 3 (plan C)</label>
+                <select class="select select-bordered select-sm w-full" id="pos3-${p.id}" onchange="savePlayer(${p.id})">
+                  ${buildOptions(POSITIONS, p.position_3 || "")}
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-base-content/60">Niveau</label>
+                <select class="select select-bordered select-sm w-full" id="level-${p.id}" onchange="savePlayer(${p.id})">
+                  ${buildOptions(LEVELS, p.level || 2)}
+                </select>
+              </div>
+            </div>
+          </div>`,
+          )
+          .join("");
+      }
+
+      async function savePlayer(id) {
+        const position_1 = document.getElementById(`pos1-${id}`).value;
+        const position_2 = document.getElementById(`pos2-${id}`).value;
+        const position_3 = document.getElementById(`pos3-${id}`).value;
+        const level = parseInt(document.getElementById(`level-${id}`).value);
+
+        await apiPost("update_player_details", {
+          id,
+          position_1,
+          position_2,
+          position_3,
+          level,
+        });
+
+        const row = document.getElementById(`player-row-${id}`);
+        row.classList.add("bg-success/20");
+        setTimeout(() => row.classList.remove("bg-success/20"), 1000);
+      }
+
+      // ===================== TRAININGS LIST =====================
+      function renderTrainingsList(trainings) {
+        const container = document.getElementById("trainings-list");
+        if (trainings.length === 0) {
+          container.innerHTML =
+            '<p class="text-base-content/60 text-sm">Aucun entrainement.</p>';
+          return;
+        }
+        container.innerHTML = trainings
+          .map(
+            (t) => `
+          <div class="flex items-center justify-between py-2 border-b border-base-200 last:border-0">
+            <span class="text-xs sm:text-sm">${formatDate(t.date)} — ${t.presentIds.length} presente(s)</span>
+            <button class="btn btn-error btn-xs" onclick="deleteTraining(${t.id})">Supprimer</button>
+          </div>`,
+          )
+          .join("");
+      }
+
+      async function deleteTraining(id) {
+        if (!confirm("Supprimer cet entrainement ?")) return;
+        await apiPost("delete_training", { id });
+        await renderAll();
+      }
+
+      // ===================== PASSWORD =====================
+      async function verifyPassword() {
+        const password = document.getElementById("password-input").value;
+        const result = await apiPost("verify_coach_password", { password });
+        if (result.ok) {
+          document.getElementById("lock-screen").classList.add("hidden");
+          document.getElementById("coach-content").classList.remove("hidden");
+          renderAll();
+        } else {
+          document.getElementById("password-error").classList.remove("hidden");
+          document.getElementById("password-input").value = "";
+          document.getElementById("password-input").focus();
+        }
+      }
+
+      function toggleChangePassword() {
+        const section = document.getElementById("change-password-section");
+        section.classList.toggle("hidden");
+        document.getElementById("change-password-error").classList.add("hidden");
+        document.getElementById("change-password-success").classList.add("hidden");
+      }
+
+      async function changePassword() {
+        const oldPwd = document.getElementById("old-password").value;
+        const newPwd = document.getElementById("new-password").value;
+        const confirmPwd = document.getElementById("confirm-password").value;
+        const errorEl = document.getElementById("change-password-error");
+        const successEl = document.getElementById("change-password-success");
+        errorEl.classList.add("hidden");
+        successEl.classList.add("hidden");
+
+        if (newPwd === "") {
+          errorEl.textContent = "Le nouveau mot de passe ne peut pas etre vide.";
+          errorEl.classList.remove("hidden");
+          return;
+        }
+        if (newPwd !== confirmPwd) {
+          errorEl.textContent = "Les mots de passe ne correspondent pas.";
+          errorEl.classList.remove("hidden");
+          return;
+        }
+
+        const res = await fetch("api.php?action=change_coach_password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ old_password: oldPwd, new_password: newPwd }),
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          successEl.classList.remove("hidden");
+          document.getElementById("old-password").value = "";
+          document.getElementById("new-password").value = "";
+          document.getElementById("confirm-password").value = "";
+        } else {
+          errorEl.textContent = data.error || "Ancien mot de passe incorrect.";
+          errorEl.classList.remove("hidden");
+        }
+      }
+
+      // ===================== RENDER ALL =====================
+      async function renderAll() {
+        const [players, trainings] = await Promise.all([
+          apiGet("get_players"),
+          apiGet("get_trainings"),
+        ]);
+        renderCoachTable(players);
+        renderTrainingsList(trainings);
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("password-input").focus();
+      });
+    </script>
+  </body>
+</html>

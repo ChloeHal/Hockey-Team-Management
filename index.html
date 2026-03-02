@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr" data-theme="coreprobably">
+<html lang="fr" data-theme="alphahouse">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -349,59 +349,6 @@
       id="page-presences"
       class="container mx-auto px-3 sm:px-4 py-3 max-w-6xl hidden"
     >
-      <!-- Section: Gestion des joueuses -->
-      <div class="card bg-base-100 shadow-xl mt-3">
-        <div class="card-body p-3 sm:p-6">
-          <h2 class="card-title text-lg sm:text-xl mb-3">
-            Gestion des joueuses
-          </h2>
-
-          <!-- Formulaire ajout -->
-          <div class="flex gap-2 items-end mb-4">
-            <div class="form-control flex-1">
-              <label class="label py-1"
-                ><span class="label-text text-sm">Nom</span></label
-              >
-              <input
-                type="text"
-                id="player-name"
-                placeholder="Nom de la joueuse"
-                class="input input-bordered input-sm w-full"
-              />
-            </div>
-            <div class="form-control w-16">
-              <label class="label py-1"
-                ><span class="label-text text-sm">N°</span></label
-              >
-              <input
-                type="number"
-                id="player-number"
-                placeholder="N°"
-                class="input input-bordered input-sm w-full"
-                min="1"
-              />
-            </div>
-            <button class="btn btn-primary btn-sm" onclick="addPlayer()">
-              Ajouter
-            </button>
-          </div>
-
-          <!-- Tableau joueuses -->
-          <div class="overflow-x-auto -mx-3 sm:mx-0">
-            <table class="table table-zebra table-xs sm:table-sm">
-              <thead>
-                <tr>
-                  <th>N°</th>
-                  <th>Nom</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="players-table-body"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
       <!-- Section: Enregistrer les présences -->
       <div class="card bg-base-100 shadow-xl mt-3">
         <div class="card-body p-3 sm:p-6">
@@ -524,33 +471,34 @@
                     <th>#</th>
                     <th>N°</th>
                     <th>Nom</th>
+                    <th>Pos.</th>
                     <th class="text-center">3 dern.</th>
                     <th class="text-center">5 dern.</th>
+                    <th class="text-center action-col">Action</th>
                   </tr>
                 </thead>
                 <tbody id="match-sheet-body"></tbody>
               </table>
             </div>
             <div id="match-sheet-excluded" class="mt-3"></div>
-            <button
-              class="btn btn-outline btn-sm w-full sm:w-auto mt-3"
-              onclick="printMatchSheet()"
-            >
-              Imprimer
-            </button>
+            <div class="flex flex-wrap gap-2 mt-3">
+              <button
+                class="btn btn-outline btn-sm w-full sm:w-auto"
+                onclick="printMatchSheet()"
+              >
+                Imprimer
+              </button>
+              <button
+                class="btn btn-primary btn-sm w-full sm:w-auto"
+                onclick="exportMatchSheetPNG()"
+              >
+                Exporter PNG
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Section: Supprimer un entraînement -->
-      <div class="card bg-base-100 shadow-xl mt-3 mb-6">
-        <div class="card-body p-3 sm:p-6">
-          <h2 class="card-title text-lg sm:text-xl mb-3">
-            Gérer les entraînements
-          </h2>
-          <div id="trainings-list"></div>
-        </div>
-      </div>
     </div>
 
     <script>
@@ -583,43 +531,6 @@
         document
           .getElementById("tab-presences")
           .classList.toggle("tab-active", tab === "presences");
-      }
-
-      // ===================== PLAYER MANAGEMENT =====================
-      async function addPlayer() {
-        const name = document.getElementById("player-name").value.trim();
-        const number = document.getElementById("player-number").value.trim();
-        if (!name) {
-          alert("Veuillez entrer un nom.");
-          return;
-        }
-        await apiPost("add_player", { name, number: number || "" });
-        document.getElementById("player-name").value = "";
-        document.getElementById("player-number").value = "";
-        await renderAll();
-      }
-
-      async function deletePlayer(id) {
-        if (!confirm("Supprimer cette joueuse ?")) return;
-        await apiPost("delete_player", { id });
-        await renderAll();
-      }
-
-      async function renderPlayersTable() {
-        const players = await apiGet("get_players");
-        const tbody = document.getElementById("players-table-body");
-        tbody.innerHTML = players
-          .map(
-            (p) => `
-          <tr>
-            <td class="font-bold">${p.number ? escapeHtml(p.number) : "-"}</td>
-            <td class="font-medium">${escapeHtml(p.name)}</td>
-            <td><button class="btn btn-error btn-xs" onclick="deletePlayer(${p.id})">Supprimer</button></td>
-          </tr>
-        `,
-          )
-          .join("");
-        return players;
       }
 
       // ===================== TRAINING ATTENDANCE =====================
@@ -716,32 +627,6 @@
           .join("");
       }
 
-      // ===================== TRAININGS LIST =====================
-      function renderTrainingsListFromData(trainings) {
-        const container = document.getElementById("trainings-list");
-        if (trainings.length === 0) {
-          container.innerHTML =
-            '<p class="text-base-content/60 text-sm">Aucun entraînement.</p>';
-          return;
-        }
-        container.innerHTML = trainings
-          .map(
-            (t) => `
-          <div class="flex items-center justify-between py-2 border-b border-base-200 last:border-0">
-            <span class="text-xs sm:text-sm">${formatDate(t.date)} — ${t.presentIds.length} présente(s)</span>
-            <button class="btn btn-error btn-xs" onclick="deleteTraining(${t.id})">Supprimer</button>
-          </div>
-        `,
-          )
-          .join("");
-      }
-
-      async function deleteTraining(id) {
-        if (!confirm("Supprimer cet entraînement ?")) return;
-        await apiPost("delete_training", { id });
-        await renderAll();
-      }
-
       // ===================== MATCH SHEET GENERATION =====================
       function renderMatchChecklistFromData(players) {
         const container = document.getElementById("match-checklist");
@@ -769,6 +654,60 @@
           .forEach((cb) => (cb.checked = false));
       }
 
+      // ===================== POSITION HELPERS =====================
+      const POS_LABELS = {
+        gardienne: "G",
+        defense_centrale: "DC",
+        defense_laterale: "DL",
+        milieu_centre: "MC",
+        milieu_aile: "MA",
+        attaquante_centre: "AC",
+        attaquante_aile: "AA",
+      };
+      const POS_GROUPS = {
+        gardienne: "gardienne",
+        defense_centrale: "defense",
+        defense_laterale: "defense",
+        milieu_centre: "milieu",
+        milieu_aile: "milieu",
+        attaquante_centre: "attaque",
+        attaquante_aile: "attaque",
+      };
+      const POS_MINIMUMS = { gardienne: 1, defense: 5, milieu: 5, attaque: 3 };
+      // Maximums par position spécifique
+      const POS_MAXIMUMS = {
+        gardienne: 1,
+        defense_centrale: 3,
+        defense_laterale: 3,
+        milieu_centre: 3,
+        milieu_aile: 3,
+        attaquante_centre: 3,
+        attaquante_aile: 3,
+      };
+      // Maximums par groupe global
+      const GROUP_MAXIMUMS = { gardienne: 1, defense: 5, milieu: 5, attaque: 3 };
+
+      function posLabel(player) {
+        const p1 = POS_LABELS[player.position_1] || "";
+        if (!p1) return "?";
+        return p1;
+      }
+
+      function getPlayerGroups(player) {
+        const groups = [];
+        for (const key of ["position_1", "position_2", "position_3"]) {
+          const pos = player[key];
+          if (pos && POS_GROUPS[pos]) {
+            const g = POS_GROUPS[pos];
+            if (!groups.includes(g)) groups.push(g);
+          }
+        }
+        return groups;
+      }
+
+      // ===================== MATCH SHEET STATE =====================
+      let matchState = { selected: [], deliberation: [], excluded: [], trainings: [] };
+
       async function generateMatchSheet() {
         const [players, trainings] = await Promise.all([
           apiGet("get_players"),
@@ -792,54 +731,200 @@
           const pid = String(p.id);
           const recent3 = trainings.slice(-3);
           const recent5 = trainings.slice(-5);
-          const pres3 = recent3.filter((t) =>
-            t.presentIds.includes(pid),
-          ).length;
-          const pres5 = recent5.filter((t) =>
-            t.presentIds.includes(pid),
-          ).length;
+          const pres3 = recent3.filter((t) => t.presentIds.includes(pid)).length;
+          const pres5 = recent5.filter((t) => t.presentIds.includes(pid)).length;
           return { ...p, pres3, pres5 };
         });
+
+        // ============================================================
+        // LOGIQUE DE SÉLECTION
+        // ============================================================
+        //
+        // Étape 1 : Tri par présences (3 derniers desc, puis 5 derniers desc)
+        // Étape 2 : Si <= 16, toutes sélectionnées
+        // Étape 3 : Au-dessus du seuil → sélectionnées directement
+        // Étape 4 : Départage des égalités, tri par score composite :
+        //   a) Score position (cumulé) : pos comble un besoin ? pos1=3pts, pos2=2pts, pos3=1pt
+        //   b) Niveau (1=fort, 2=moyen, 3=faible)
+        //   c) Besoin spécifique : places restantes dans la position spécifique
+        //   d) Position saturée → malus
+        // Étape 5 : Sélection une par une, délibération uniquement
+        //           si les dernières candidates ont un score strictement identique
+        //
+        // ============================================================
 
         scored.sort((a, b) => {
           if (b.pres3 !== a.pres3) return b.pres3 - a.pres3;
           return b.pres5 - a.pres5;
         });
 
-        // Séparer en 3 groupes : sélectionnées, à délibérer, non sélectionnées
         let selected = [];
         let deliberation = [];
         let excluded = [];
 
+        // Compteurs de positions remplies
+        const filledByPos = {};
+        for (const pos in POS_MAXIMUMS) filledByPos[pos] = 0;
+        const filledByGroup = { gardienne: 0, defense: 0, milieu: 0, attaque: 0 };
+
+        function countPlayer(p) {
+          const pos1 = p.position_1;
+          if (pos1 && filledByPos.hasOwnProperty(pos1)) filledByPos[pos1]++;
+          const grp = pos1 && POS_GROUPS[pos1];
+          if (grp) filledByGroup[grp]++;
+        }
+
+        function wouldExceedMax(p) {
+          const pos1 = p.position_1;
+          if (pos1 && POS_MAXIMUMS[pos1] !== undefined) {
+            if (filledByPos[pos1] >= POS_MAXIMUMS[pos1]) return true;
+          }
+          const grp = pos1 && POS_GROUPS[pos1];
+          if (grp && GROUP_MAXIMUMS[grp] !== undefined) {
+            if (filledByGroup[grp] >= GROUP_MAXIMUMS[grp]) return true;
+          }
+          return false;
+        }
+
         if (scored.length <= 16) {
           selected = scored;
+          selected.forEach(countPlayer);
         } else {
-          // Trouver le score seuil au 16e spot
           const cutoff = scored[15];
-          const cutoffPres3 = cutoff.pres3;
-          const cutoffPres5 = cutoff.pres5;
+          const cutPres3 = cutoff.pres3;
+          const cutPres5 = cutoff.pres5;
+
+          const above = [];
+          const tied = [];
+          const below = [];
 
           for (const p of scored) {
-            if (p.pres3 > cutoffPres3 || (p.pres3 === cutoffPres3 && p.pres5 > cutoffPres5)) {
-              selected.push(p);
-            } else if (p.pres3 === cutoffPres3 && p.pres5 === cutoffPres5) {
-              deliberation.push(p);
+            if (p.pres3 > cutPres3 || (p.pres3 === cutPres3 && p.pres5 > cutPres5)) {
+              above.push(p);
+            } else if (p.pres3 === cutPres3 && p.pres5 === cutPres5) {
+              tied.push(p);
             } else {
-              excluded.push(p);
+              below.push(p);
             }
           }
 
-          // Si aucune égalité au seuil, toutes celles à délibérer sont en fait sélectionnées
+          selected = [...above];
+          selected.forEach(countPlayer);
+
           const spotsLeft = 16 - selected.length;
-          if (deliberation.length <= spotsLeft) {
-            selected.push(...deliberation);
-            deliberation = [];
+
+          if (tied.length <= spotsLeft) {
+            tied.forEach(countPlayer);
+            selected.push(...tied);
+            excluded = below;
+          } else {
+            // --- DÉPARTAGE DES ÉGALITÉS ---
+
+            const remainingNeeds = {};
+            for (const grp in POS_MINIMUMS) {
+              remainingNeeds[grp] = Math.max(0, POS_MINIMUMS[grp] - filledByGroup[grp]);
+            }
+
+            // Calculer un score composite pour chaque joueuse à égalité
+            // Score = posScore * 1000 + (3 - level) * 100 + specificNeed * 10
+            // Plus le score est haut, mieux c'est
+            function computeScore(p) {
+              if (wouldExceedMax(p)) return -1000;
+
+              // Score position CUMULÉ (pas juste le max)
+              // pos1 comble un besoin = +3, pos2 = +2, pos3 = +1
+              let posScore = 0;
+              const slots = [
+                { key: "position_1", weight: 3 },
+                { key: "position_2", weight: 2 },
+                { key: "position_3", weight: 1 },
+              ];
+              for (const slot of slots) {
+                const pos = p[slot.key];
+                const grp = pos && POS_GROUPS[pos];
+                if (grp && remainingNeeds[grp] > 0) {
+                  posScore += slot.weight;
+                }
+              }
+
+              // Niveau inversé (1=fort→2pts, 2=moyen→1pt, 3=faible→0pt)
+              const levelScore = 3 - (p.level || 2);
+
+              // Besoin spécifique : combien de places restent dans sa position exacte
+              // Plus c'est rare (peu de places restantes), plus elle est prioritaire
+              const pos1 = p.position_1;
+              let specificNeed = 0;
+              if (pos1 && POS_MAXIMUMS[pos1] !== undefined) {
+                specificNeed = POS_MAXIMUMS[pos1] - (filledByPos[pos1] || 0);
+              }
+
+              return posScore * 1000 + levelScore * 100 + specificNeed * 10;
+            }
+
+            // Calculer et trier
+            for (const p of tied) {
+              p._score = computeScore(p);
+            }
+            tied.sort((a, b) => b._score - a._score);
+
+            // Sélectionner une par une
+            let spotsRemaining = spotsLeft;
+            let i = 0;
+
+            while (i < tied.length && spotsRemaining > 0) {
+              const current = tied[i];
+
+              // Compter combien ont exactement le même score
+              let j = i;
+              while (j < tied.length && tied[j]._score === current._score) j++;
+              const sameCount = j - i;
+
+              if (sameCount <= spotsRemaining) {
+                // Toutes celles avec ce score tiennent → sélectionnées
+                for (let k = i; k < j; k++) {
+                  countPlayer(tied[k]);
+                  const grp = tied[k].position_1 && POS_GROUPS[tied[k].position_1];
+                  if (grp && remainingNeeds[grp] > 0) remainingNeeds[grp]--;
+                  selected.push(tied[k]);
+                }
+                spotsRemaining -= sameCount;
+              } else {
+                // Score identique mais pas assez de places → délibération
+                // Construire la raison d'égalité
+                const names = [];
+                for (let k = i; k < j; k++) names.push(tied[k].name);
+                const pos1 = current.position_1;
+                const grp = pos1 && POS_GROUPS[pos1];
+                const posName = pos1 ? (POS_LABELS[pos1] || pos1) : "?";
+
+                let reason = "Egalite de presences (" + current.pres3 + "/" + maxT3 + ", " + current.pres5 + "/" + maxT5 + ")";
+                reason += ", meme niveau (" + (current.level || 2) + ")";
+                if (grp) {
+                  reason += ", en competition pour " + posName;
+                }
+
+                for (let k = i; k < j; k++) {
+                  const others = names.filter(n => n !== tied[k].name);
+                  tied[k]._reason = reason;
+                  tied[k]._rivals = others;
+                  deliberation.push(tied[k]);
+                }
+              }
+
+              i = j;
+            }
+
+            while (i < tied.length) {
+              excluded.push(tied[i]);
+              i++;
+            }
+            excluded.push(...below);
           }
         }
 
-        const sheetDiv = document.getElementById("match-sheet");
-        sheetDiv.classList.remove("hidden");
+        matchState = { selected, deliberation, excluded, trainings };
 
+        document.getElementById("match-sheet").classList.remove("hidden");
         document.getElementById("match-sheet-date").textContent =
           "Match du " +
           new Date().toLocaleDateString("fr-BE", {
@@ -849,6 +934,15 @@
             day: "numeric",
           });
 
+        renderMatchSheet();
+        document.getElementById("match-sheet").scrollIntoView({ behavior: "smooth" });
+      }
+
+      function renderMatchSheet() {
+        const { selected, deliberation, excluded, trainings } = matchState;
+        const maxT3 = Math.min(3, trainings.length);
+        const maxT5 = Math.min(5, trainings.length);
+
         let bodyHtml = selected
           .map(
             (p, i) => `
@@ -856,10 +950,13 @@
             <td class="font-bold">${i + 1}</td>
             <td class="font-bold">${p.number ? escapeHtml(p.number) : "-"}</td>
             <td class="font-medium">${escapeHtml(p.name)}</td>
-            <td class="text-center">${p.pres3}/${Math.min(3, trainings.length)}</td>
-            <td class="text-center">${p.pres5}/${Math.min(5, trainings.length)}</td>
-          </tr>
-        `,
+            <td class="text-xs opacity-70">${posLabel(p)}</td>
+            <td class="text-center">${p.pres3}/${maxT3}</td>
+            <td class="text-center">${p.pres5}/${maxT5}</td>
+            <td class="text-center action-col">
+              <button class="btn btn-error btn-xs" onclick="removeFromSelection(${p.id})">Retirer</button>
+            </td>
+          </tr>`,
           )
           .join("");
 
@@ -867,8 +964,8 @@
           const spotsLeft = 16 - selected.length;
           bodyHtml += `
           <tr>
-            <td colspan="5" class="text-center font-bold text-warning bg-warning/10 py-2">
-              ⚠ Égalité — ${deliberation.length} joueuses pour ${spotsLeft} place${spotsLeft > 1 ? "s" : ""} — Délibération du coach requise
+            <td colspan="7" class="text-center font-bold text-warning bg-warning/10 py-2">
+              ⚠ Délibération — ${deliberation.length} joueuse${deliberation.length > 1 ? "s" : ""} pour ${spotsLeft} place${spotsLeft > 1 ? "s" : ""}
             </td>
           </tr>`;
           bodyHtml += deliberation
@@ -878,10 +975,13 @@
             <td class="font-bold">?</td>
             <td class="font-bold">${p.number ? escapeHtml(p.number) : "-"}</td>
             <td class="font-medium">${escapeHtml(p.name)}</td>
-            <td class="text-center">${p.pres3}/${Math.min(3, trainings.length)}</td>
-            <td class="text-center">${p.pres5}/${Math.min(5, trainings.length)}</td>
-          </tr>
-        `,
+            <td class="text-xs opacity-70">${posLabel(p)}</td>
+            <td class="text-center">${p.pres3}/${maxT3}</td>
+            <td class="text-center">${p.pres5}/${maxT5}</td>
+            <td class="text-center action-col">
+              <button class="btn btn-success btn-xs" onclick="addToSelection(${p.id})">Ajouter</button>
+            </td>
+          </tr>`,
             )
             .join("");
         }
@@ -897,12 +997,118 @@
         } else {
           excludedDiv.innerHTML = "";
         }
+      }
 
-        sheetDiv.scrollIntoView({ behavior: "smooth" });
+      function addToSelection(playerId) {
+        const idx = matchState.deliberation.findIndex((p) => p.id === playerId);
+        if (idx === -1) return;
+        const [player] = matchState.deliberation.splice(idx, 1);
+        matchState.selected.push(player);
+        renderMatchSheet();
+      }
+
+      function removeFromSelection(playerId) {
+        const idx = matchState.selected.findIndex((p) => p.id === playerId);
+        if (idx === -1) return;
+        const [player] = matchState.selected.splice(idx, 1);
+        matchState.excluded.push(player);
+        renderMatchSheet();
       }
 
       function printMatchSheet() {
         window.print();
+      }
+
+      function exportMatchSheetPNG() {
+        const { selected, trainings } = matchState;
+        const maxT3 = Math.min(3, trainings.length);
+        const maxT5 = Math.min(5, trainings.length);
+        const title = document.getElementById("match-sheet-date").textContent;
+
+        const cols = ["#", "N°", "Nom", "Pos.", "3 dern.", "5 dern."];
+        const colWidths = [40, 50, 200, 60, 70, 70];
+        const totalW = colWidths.reduce((a, b) => a + b, 0);
+        const rowH = 32;
+        const headerH = 36;
+        const titleH = 50;
+        const pad = 20;
+        const canvasH = titleH + headerH + selected.length * rowH + pad * 2;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = (totalW + pad * 2) * 2;
+        canvas.height = canvasH * 2;
+        const ctx = canvas.getContext("2d");
+        ctx.scale(2, 2);
+
+        // Fond blanc
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, totalW + pad * 2, canvasH);
+
+        // Titre
+        ctx.fillStyle = "#000000";
+        ctx.font = "bold 16px Rubik, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(title, (totalW + pad * 2) / 2, pad + 24);
+
+        let y = pad + titleH;
+
+        // Header
+        ctx.fillStyle = "#f0f0f0";
+        ctx.fillRect(pad, y, totalW, headerH);
+        ctx.fillStyle = "#000000";
+        ctx.font = "bold 13px Rubik, sans-serif";
+        ctx.textAlign = "left";
+        let x = pad;
+        cols.forEach((col, i) => {
+          ctx.fillText(col, x + 6, y + 22);
+          x += colWidths[i];
+        });
+        y += headerH;
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(pad, y);
+        ctx.lineTo(pad + totalW, y);
+        ctx.stroke();
+
+        // Lignes
+        ctx.font = "13px Rubik, sans-serif";
+        ctx.lineWidth = 0.5;
+        ctx.strokeStyle = "#dddddd";
+
+        function drawRow(p, rank, bg) {
+          if (bg) {
+            ctx.fillStyle = bg;
+            ctx.fillRect(pad, y, totalW, rowH);
+          }
+          ctx.fillStyle = "#000000";
+          const values = [
+            String(rank),
+            p.number || "-",
+            p.name,
+            posLabel(p),
+            p.pres3 + "/" + maxT3,
+            p.pres5 + "/" + maxT5,
+          ];
+          let rx = pad;
+          values.forEach((val, i) => {
+            ctx.fillText(val, rx + 6, y + 21, colWidths[i] - 12);
+            rx += colWidths[i];
+          });
+          y += rowH;
+          ctx.beginPath();
+          ctx.moveTo(pad, y);
+          ctx.lineTo(pad + totalW, y);
+          ctx.stroke();
+        }
+
+        selected.forEach((p, i) => drawRow(p, i + 1, i % 2 === 1 ? "#f9f9f9" : null));
+
+        // Telecharger
+        const link = document.createElement("a");
+        link.download = "feuille-de-match.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
       }
 
       // ===================== UTILITIES =====================
@@ -1116,26 +1322,10 @@
           apiGet("get_trainings"),
         ]);
 
-        // Render with fetched data
-        const tbody = document.getElementById("players-table-body");
-        tbody.innerHTML = players
-          .map(
-            (p) => `
-          <tr>
-            <td class="font-bold">${p.number ? escapeHtml(p.number) : "-"}</td>
-            <td class="font-medium">${escapeHtml(p.name)}</td>
-            <td><button class="btn btn-error btn-xs" onclick="deletePlayer(${p.id})">Supprimer</button></td>
-          </tr>
-        `,
-          )
-          .join("");
-
         renderTrainingChecklistFromData(players);
         renderPresenceTableFromData(players, trainings);
         renderMatchChecklistFromData(players);
-        renderTrainingsListFromData(trainings);
 
-        // These fetch their own data
         await Promise.all([
           renderImportantMsg(),
           renderNotes(),
