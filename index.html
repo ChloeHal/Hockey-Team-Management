@@ -803,12 +803,39 @@
 
         scored.sort((a, b) => {
           if (b.pres3 !== a.pres3) return b.pres3 - a.pres3;
-          if (b.pres5 !== a.pres5) return b.pres5 - a.pres5;
-          return a.name.localeCompare(b.name);
+          return b.pres5 - a.pres5;
         });
 
-        const selected = scored.slice(0, 16);
-        const excluded = scored.slice(16);
+        // Séparer en 3 groupes : sélectionnées, à délibérer, non sélectionnées
+        let selected = [];
+        let deliberation = [];
+        let excluded = [];
+
+        if (scored.length <= 16) {
+          selected = scored;
+        } else {
+          // Trouver le score seuil au 16e spot
+          const cutoff = scored[15];
+          const cutoffPres3 = cutoff.pres3;
+          const cutoffPres5 = cutoff.pres5;
+
+          for (const p of scored) {
+            if (p.pres3 > cutoffPres3 || (p.pres3 === cutoffPres3 && p.pres5 > cutoffPres5)) {
+              selected.push(p);
+            } else if (p.pres3 === cutoffPres3 && p.pres5 === cutoffPres5) {
+              deliberation.push(p);
+            } else {
+              excluded.push(p);
+            }
+          }
+
+          // Si aucune égalité au seuil, toutes celles à délibérer sont en fait sélectionnées
+          const spotsLeft = 16 - selected.length;
+          if (deliberation.length <= spotsLeft) {
+            selected.push(...deliberation);
+            deliberation = [];
+          }
+        }
 
         const sheetDiv = document.getElementById("match-sheet");
         sheetDiv.classList.remove("hidden");
@@ -822,7 +849,7 @@
             day: "numeric",
           });
 
-        document.getElementById("match-sheet-body").innerHTML = selected
+        let bodyHtml = selected
           .map(
             (p, i) => `
           <tr>
@@ -835,6 +862,31 @@
         `,
           )
           .join("");
+
+        if (deliberation.length > 0) {
+          const spotsLeft = 16 - selected.length;
+          bodyHtml += `
+          <tr>
+            <td colspan="5" class="text-center font-bold text-warning bg-warning/10 py-2">
+              ⚠ Égalité — ${deliberation.length} joueuses pour ${spotsLeft} place${spotsLeft > 1 ? "s" : ""} — Délibération du coach requise
+            </td>
+          </tr>`;
+          bodyHtml += deliberation
+            .map(
+              (p) => `
+          <tr class="bg-warning/5">
+            <td class="font-bold">?</td>
+            <td class="font-bold">${p.number ? escapeHtml(p.number) : "-"}</td>
+            <td class="font-medium">${escapeHtml(p.name)}</td>
+            <td class="text-center">${p.pres3}/${Math.min(3, trainings.length)}</td>
+            <td class="text-center">${p.pres5}/${Math.min(5, trainings.length)}</td>
+          </tr>
+        `,
+            )
+            .join("");
+        }
+
+        document.getElementById("match-sheet-body").innerHTML = bodyHtml;
 
         const excludedDiv = document.getElementById("match-sheet-excluded");
         if (excluded.length > 0) {
