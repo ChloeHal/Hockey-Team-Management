@@ -12,6 +12,119 @@
       rel="stylesheet"
     />
     <link href="./output.css" rel="stylesheet" />
+    <style>
+      /* ====== FIELD VIEW ====== */
+      #field-terrain {
+        background: linear-gradient(180deg, #2a6e2e 0%, #34893a 40%, #34893a 60%, #2a6e2e 100%);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid rgba(255,255,255,0.25);
+        position: relative;
+      }
+      #field-terrain::after {
+        content: '';
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 70px; height: 70px;
+        border: 1px dashed rgba(255,255,255,0.15);
+        border-radius: 50%;
+        pointer-events: none;
+      }
+      .field-row {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 16px 8px 16px 42px;
+        min-height: 58px;
+        transition: background 0.15s;
+      }
+      .field-row + .field-row {
+        border-top: 1px dashed rgba(255,255,255,0.2);
+      }
+      .field-row-label {
+        position: absolute;
+        left: 6px; top: 50%;
+        transform: translateY(-50%);
+        font-size: 10px;
+        font-weight: 700;
+        color: rgba(255,255,255,0.35);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        pointer-events: none;
+      }
+      .field-card {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(255,255,255,0.95);
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+      }
+      .field-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      }
+      .field-card-pos {
+        font-size: 9px;
+        font-weight: 700;
+        padding: 1px 4px;
+        border-radius: 3px;
+        color: white;
+        line-height: 1.3;
+      }
+      .fc-g { background: #d97706; }
+      .fc-def { background: #2563eb; }
+      .fc-mil { background: #059669; }
+      .fc-att { background: #dc2626; }
+      .field-card.dragging-source { opacity: 0.25; }
+      .field-ghost {
+        transform: scale(1.08);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
+        opacity: 0.92;
+      }
+      .field-drop-zone.drag-over {
+        background: rgba(255,255,255,0.15);
+      }
+      #field-bench {
+        background: oklch(var(--b2));
+        border-radius: 8px;
+        margin-top: 8px;
+        padding: 10px 8px 10px 42px;
+        min-height: 44px;
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        transition: background 0.15s;
+      }
+      #field-bench .field-card { opacity: 0.65; }
+      .field-comp-badge {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 10px;
+        border-radius: 6px;
+      }
+      @media (max-width: 640px) {
+        .field-row { padding: 12px 6px 12px 34px; min-height: 48px; gap: 4px; }
+        .field-card { font-size: 10px; padding: 3px 6px; }
+        .field-card-pos { font-size: 8px; padding: 1px 3px; }
+        .field-row-label { font-size: 9px; left: 4px; }
+        #field-bench { padding: 8px 6px 8px 34px; }
+        #field-terrain::after { width: 50px; height: 50px; }
+      }
+    </style>
   </head>
   <body class="bg-base-200 min-h-screen">
     <!-- Navbar -->
@@ -477,6 +590,39 @@
               id="match-sheet-date"
               class="text-center font-bold text-base sm:text-lg mb-4"
             ></div>
+
+            <!-- Vue terrain -->
+            <div id="match-field-view" class="mb-4">
+              <div id="field-comp" class="flex flex-wrap gap-2 justify-center mb-3"></div>
+              <div id="field-terrain">
+                <div class="field-row field-drop-zone" data-group="attaque">
+                  <div class="field-row-label">ATT</div>
+                  <div class="field-row-players"></div>
+                </div>
+                <div class="field-row field-drop-zone" data-group="milieu">
+                  <div class="field-row-label">MIL</div>
+                  <div class="field-row-players"></div>
+                </div>
+                <div class="field-row field-drop-zone" data-group="defense">
+                  <div class="field-row-label">DEF</div>
+                  <div class="field-row-players"></div>
+                </div>
+                <div class="field-row field-drop-zone" data-group="gardienne">
+                  <div class="field-row-label">G</div>
+                  <div class="field-row-players"></div>
+                </div>
+              </div>
+              <div id="field-bench" class="field-drop-zone" data-group="bench">
+                <div class="field-row-label">BANC</div>
+                <div class="field-row-players"></div>
+              </div>
+            </div>
+
+            <!-- Détail tableau -->
+            <div class="collapse collapse-arrow bg-base-200 rounded-lg mb-3">
+              <input type="checkbox" />
+              <div class="collapse-title text-sm font-medium py-2 min-h-0">Détail (tableau)</div>
+              <div class="collapse-content px-0">
             <div class="overflow-x-auto -mx-3 sm:mx-0">
               <table class="table table-xs sm:table-sm table-zebra">
                 <thead>
@@ -494,6 +640,8 @@
               </table>
             </div>
             <div id="match-sheet-excluded" class="mt-3"></div>
+              </div>
+            </div>
             <div class="flex flex-wrap gap-2 mt-3">
               <button
                 class="btn btn-outline btn-sm w-full sm:w-auto"
@@ -1033,6 +1181,160 @@
         document.getElementById("match-sheet").scrollIntoView({ behavior: "smooth" });
       }
 
+      // ===================== FIELD VIEW =====================
+      const GROUP_COLORS = { gardienne: "fc-g", defense: "fc-def", milieu: "fc-mil", attaque: "fc-att" };
+      const GROUP_DEFAULT_POS = {
+        gardienne: "gardienne", defense: "defense_centrale",
+        milieu: "milieu_centre", attaque: "attaquante_centre",
+      };
+      const GROUP_TARGETS = { gardienne: 1, defense: 5, milieu: 5, attaque: 3 };
+      const GROUP_SHORT = { gardienne: "G", defense: "DEF", milieu: "MIL", attaque: "ATT" };
+
+      function fieldCardHtml(p) {
+        const natPos = p._originalPos || p.position_1;
+        const natGroup = POS_GROUPS[natPos] || "milieu";
+        const lbl = POS_LABELS[natPos] || "?";
+        const cls = GROUP_COLORS[natGroup] || "fc-mil";
+        const num = p.number ? "#" + escapeHtml(p.number) + " " : "";
+        return `<div class="field-card" data-player-id="${p.id}">${
+          `<span class="field-card-pos ${cls}">${lbl}</span>`
+        }<span>${num}${escapeHtml(p.name)}</span></div>`;
+      }
+
+      function renderFieldView() {
+        const { selected, deliberation, excluded } = matchState;
+
+        const byGroup = { attaque: [], milieu: [], defense: [], gardienne: [] };
+        for (const p of selected) {
+          const grp = POS_GROUPS[p.position_1] || "milieu";
+          byGroup[grp].push(p);
+        }
+
+        for (const grp of ["attaque", "milieu", "defense", "gardienne"]) {
+          const el = document.querySelector(`#field-terrain .field-drop-zone[data-group="${grp}"] .field-row-players`);
+          if (el) el.innerHTML = byGroup[grp].map(p => fieldCardHtml(p)).join("");
+        }
+
+        const bench = [...deliberation, ...excluded];
+        const benchEl = document.querySelector("#field-bench .field-row-players");
+        if (benchEl) benchEl.innerHTML = bench.length > 0
+          ? bench.map(p => fieldCardHtml(p)).join("")
+          : '<span style="font-size:11px;opacity:0.35;font-style:italic;color:var(--bc)">Vide</span>';
+
+        // Composition indicators
+        const compDiv = document.getElementById("field-comp");
+        if (compDiv) {
+          compDiv.innerHTML = Object.entries(GROUP_SHORT).map(([grp, lbl]) => {
+            const count = byGroup[grp].length;
+            const target = GROUP_TARGETS[grp];
+            let cls;
+            if (count === target) cls = "bg-success/20 text-success";
+            else if (count < target) cls = "bg-warning/20 text-warning";
+            else cls = "bg-info/20 text-info";
+            return `<span class="field-comp-badge ${cls}">${lbl} ${count}/${target}</span>`;
+          }).join("") + `<span class="field-comp-badge ${selected.length === 16 ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}">Total ${selected.length}/16</span>`;
+        }
+      }
+
+      // ===================== FIELD DRAG & DROP =====================
+      let fieldDrag = null;
+
+      function initFieldDrag() {
+        const view = document.getElementById("match-field-view");
+        if (!view) return;
+
+        view.addEventListener("pointerdown", (e) => {
+          const card = e.target.closest(".field-card");
+          if (!card) return;
+          e.preventDefault();
+
+          const rect = card.getBoundingClientRect();
+          const ghost = card.cloneNode(true);
+          ghost.classList.add("field-ghost");
+          Object.assign(ghost.style, {
+            position: "fixed", width: rect.width + "px",
+            pointerEvents: "none", zIndex: "9999",
+            left: (e.clientX - (e.clientX - rect.left)) + "px",
+            top: (e.clientY - (e.clientY - rect.top)) + "px",
+          });
+          document.body.appendChild(ghost);
+          card.classList.add("dragging-source");
+
+          fieldDrag = {
+            id: parseInt(card.dataset.playerId),
+            ghost, source: card,
+            ox: e.clientX - rect.left,
+            oy: e.clientY - rect.top,
+          };
+
+          document.addEventListener("pointermove", onFieldMove);
+          document.addEventListener("pointerup", onFieldUp);
+        });
+      }
+
+      function onFieldMove(e) {
+        if (!fieldDrag) return;
+        e.preventDefault();
+        fieldDrag.ghost.style.left = (e.clientX - fieldDrag.ox) + "px";
+        fieldDrag.ghost.style.top = (e.clientY - fieldDrag.oy) + "px";
+
+        document.querySelectorAll(".field-drop-zone").forEach(z => z.classList.remove("drag-over"));
+        fieldDrag.ghost.style.display = "none";
+        const under = document.elementFromPoint(e.clientX, e.clientY);
+        fieldDrag.ghost.style.display = "";
+        const zone = under && under.closest(".field-drop-zone");
+        if (zone) zone.classList.add("drag-over");
+      }
+
+      function onFieldUp(e) {
+        document.removeEventListener("pointermove", onFieldMove);
+        document.removeEventListener("pointerup", onFieldUp);
+        if (!fieldDrag) return;
+
+        fieldDrag.ghost.remove();
+        fieldDrag.source.classList.remove("dragging-source");
+        document.querySelectorAll(".field-drop-zone").forEach(z => z.classList.remove("drag-over"));
+
+        fieldDrag.ghost.style.display = "none";
+        const under = document.elementFromPoint(e.clientX, e.clientY);
+        const zone = under && under.closest(".field-drop-zone");
+
+        if (zone) {
+          handleFieldDrop(fieldDrag.id, zone.dataset.group);
+        }
+        fieldDrag = null;
+      }
+
+      function handleFieldDrop(playerId, targetGroup) {
+        const s = matchState;
+        let player = null;
+
+        for (const list of [s.selected, s.deliberation, s.excluded]) {
+          const idx = list.findIndex(p => p.id === playerId);
+          if (idx !== -1) {
+            [player] = list.splice(idx, 1);
+            break;
+          }
+        }
+        if (!player) return;
+
+        if (targetGroup === "bench") {
+          s.excluded.push(player);
+        } else {
+          if (!player._originalPos) player._originalPos = player.position_1;
+          // Best position for the target group
+          const origPos = player._originalPos;
+          let bestPos = GROUP_DEFAULT_POS[targetGroup];
+          for (const pos of [origPos, player.position_2, player.position_3]) {
+            if (pos && POS_GROUPS[pos] === targetGroup) { bestPos = pos; break; }
+          }
+          player.position_1 = bestPos;
+          s.selected.push(player);
+        }
+
+        renderMatchSheet();
+      }
+
       function renderMatchSheet() {
         const { selected, deliberation, excluded, trainings } = matchState;
         const maxT3 = Math.min(3, trainings.length);
@@ -1092,6 +1394,8 @@
         } else {
           excludedDiv.innerHTML = "";
         }
+
+        renderFieldView();
       }
 
       function addToSelection(playerId) {
@@ -1194,11 +1498,26 @@
 
         selected.forEach((p, i) => drawRow(p, i + 1, i % 2 === 1 ? "#f9f9f9" : null));
 
-        // Telecharger
-        const link = document.createElement("a");
-        link.download = "feuille-de-match.png";
-        link.href = canvas.toDataURL("image/png");
-        link.click();
+        // Telecharger (avec fallback mobile)
+        canvas.toBlob(async (blob) => {
+          if (!blob) return;
+          // Essayer Web Share API (mobile)
+          if (navigator.share && navigator.canShare) {
+            const file = new File([blob], "feuille-de-match.png", { type: "image/png" });
+            if (navigator.canShare({ files: [file] })) {
+              try { await navigator.share({ files: [file] }); return; } catch {}
+            }
+          }
+          // Fallback : download classique
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.download = "feuille-de-match.png";
+          link.href = url;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(url), 5000);
+        }, "image/png");
       }
 
       // ===================== UTILITIES =====================
@@ -1436,7 +1755,10 @@
       }
 
       // ===================== INIT =====================
-      document.addEventListener("DOMContentLoaded", renderAll);
+      document.addEventListener("DOMContentLoaded", () => {
+        initFieldDrag();
+        renderAll();
+      });
     </script>
   </body>
 </html>

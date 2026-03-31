@@ -12,6 +12,114 @@
       rel="stylesheet"
     />
     <link href="./output.css" rel="stylesheet" />
+    <style>
+      #field-terrain {
+        background: linear-gradient(180deg, #2a6e2e 0%, #34893a 40%, #34893a 60%, #2a6e2e 100%);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid rgba(255,255,255,0.25);
+        position: relative;
+      }
+      #field-terrain::after {
+        content: '';
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 70px; height: 70px;
+        border: 1px dashed rgba(255,255,255,0.15);
+        border-radius: 50%;
+        pointer-events: none;
+      }
+      .field-row {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 16px 8px 16px 42px;
+        min-height: 58px;
+        transition: background 0.15s;
+      }
+      .field-row + .field-row { border-top: 1px dashed rgba(255,255,255,0.2); }
+      .field-row-label {
+        position: absolute;
+        left: 6px; top: 50%;
+        transform: translateY(-50%);
+        font-size: 10px;
+        font-weight: 700;
+        color: rgba(255,255,255,0.35);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        pointer-events: none;
+      }
+      .field-card {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(255,255,255,0.95);
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+      }
+      .field-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      }
+      .field-card-pos {
+        font-size: 9px;
+        font-weight: 700;
+        padding: 1px 4px;
+        border-radius: 3px;
+        color: white;
+        line-height: 1.3;
+      }
+      .fc-g { background: #d97706; }
+      .fc-def { background: #2563eb; }
+      .fc-mil { background: #059669; }
+      .fc-att { background: #dc2626; }
+      .field-card.dragging-source { opacity: 0.25; }
+      .field-ghost {
+        transform: scale(1.08);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
+        opacity: 0.92;
+      }
+      .field-drop-zone.drag-over { background: rgba(255,255,255,0.15); }
+      #field-bench {
+        background: oklch(var(--b2));
+        border-radius: 8px;
+        margin-top: 8px;
+        padding: 10px 8px 10px 42px;
+        min-height: 44px;
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        transition: background 0.15s;
+      }
+      #field-bench .field-card { opacity: 0.65; }
+      .field-comp-badge {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 10px;
+        border-radius: 6px;
+      }
+      @media (max-width: 640px) {
+        .field-row { padding: 12px 6px 12px 34px; min-height: 48px; gap: 4px; }
+        .field-card { font-size: 10px; padding: 3px 6px; }
+        .field-card-pos { font-size: 8px; padding: 1px 3px; }
+        .field-row-label { font-size: 9px; left: 4px; }
+        #field-bench { padding: 8px 6px 8px 34px; }
+        #field-terrain::after { width: 50px; height: 50px; }
+      }
+    </style>
   </head>
   <body class="bg-base-200 min-h-screen">
     <!-- ==================== ECRAN MOT DE PASSE ==================== -->
@@ -83,9 +191,54 @@
             </div>
             <button class="btn btn-accent w-full" onclick="coachGenerateSheet()">Generer la feuille de match</button>
 
+            <!-- Modal choix de gardienne -->
+            <dialog id="coach-goalie-modal" class="modal">
+              <div class="modal-box">
+                <h3 id="coach-goalie-modal-title" class="font-bold text-lg mb-3">Qui sera gardienne ?</h3>
+                <div id="coach-goalie-modal-list" class="flex flex-col gap-2"></div>
+                <div class="modal-action">
+                  <button class="btn btn-ghost btn-sm" onclick="document.getElementById('coach-goalie-modal').close()">Annuler</button>
+                </div>
+              </div>
+              <form method="dialog" class="modal-backdrop"><button>close</button></form>
+            </dialog>
+
             <div id="coach-match-result" class="hidden mt-4">
               <div class="divider text-sm">RESULTAT</div>
               <div id="coach-match-date" class="text-center font-bold mb-3"></div>
+
+              <!-- Vue terrain -->
+              <div id="coach-field-view" class="mb-4">
+                <div id="coach-field-comp" class="flex flex-wrap gap-2 justify-center mb-3"></div>
+                <div id="field-terrain">
+                  <div class="field-row field-drop-zone" data-group="attaque">
+                    <div class="field-row-label">ATT</div>
+                    <div class="field-row-players"></div>
+                  </div>
+                  <div class="field-row field-drop-zone" data-group="milieu">
+                    <div class="field-row-label">MIL</div>
+                    <div class="field-row-players"></div>
+                  </div>
+                  <div class="field-row field-drop-zone" data-group="defense">
+                    <div class="field-row-label">DEF</div>
+                    <div class="field-row-players"></div>
+                  </div>
+                  <div class="field-row field-drop-zone" data-group="gardienne">
+                    <div class="field-row-label">G</div>
+                    <div class="field-row-players"></div>
+                  </div>
+                </div>
+                <div id="field-bench" class="field-drop-zone" data-group="bench">
+                  <div class="field-row-label">BANC</div>
+                  <div class="field-row-players"></div>
+                </div>
+              </div>
+
+              <!-- Detail coach -->
+              <div class="collapse collapse-arrow bg-base-200 rounded-lg mb-3">
+                <input type="checkbox" />
+                <div class="collapse-title text-sm font-medium py-2 min-h-0">Detail (raisons)</div>
+                <div class="collapse-content">
 
               <h3 class="font-bold text-sm mb-2 text-success">Selectionnees</h3>
               <div id="coach-selected-list" class="space-y-1 mb-4"></div>
@@ -98,6 +251,9 @@
               <div id="coach-excluded-section" class="hidden">
                 <h3 class="font-bold text-sm mb-2 text-error">Non selectionnees</h3>
                 <div id="coach-excluded-list" class="space-y-1 mb-4"></div>
+              </div>
+
+                </div>
               </div>
 
               <button class="btn btn-primary btn-sm w-full mt-2" onclick="coachExportPNG()">Exporter PNG</button>
@@ -347,6 +503,7 @@
 
       // ===================== COACH MATCH SHEET =====================
       let coachMatchState = { selected: [], deliberation: [], excluded: [], maxT3: 0, maxT5: 0 };
+      let _coachPendingMatchData = null;
 
       function renderCoachChecklist(players) {
         document.getElementById("coach-match-checklist").innerHTML = players
@@ -386,12 +543,53 @@
           return { ...p, pres3, pres5 };
         });
 
-        // GARDIENNE = PRIORITE ABSOLUE (selectionnee avant tout le monde)
         const goalkeepers = scored.filter(p => isGoalkeeper(p));
-        const nonGoalkeepers = scored.filter(p => !isGoalkeeper(p));
-
-        // Trier les gardiennes par niveau (meilleure d'abord)
         goalkeepers.sort((a, b) => (a.level || 2) - (b.level || 2));
+
+        if (goalkeepers.length === 0) {
+          // Aucune gardienne → demander qui remplace
+          _coachPendingMatchData = { scored, trainings, maxT3, maxT5 };
+          const listDiv = document.getElementById("coach-goalie-modal-list");
+          document.getElementById("coach-goalie-modal-title").textContent = "Aucune gardienne disponible — qui la remplace ?";
+          listDiv.innerHTML = scored.map(p => `
+            <button class="btn btn-outline btn-sm justify-start" onclick="coachConfirmGoalie(${p.id})">
+              ${escapeHtml(p.name)} ${p.number ? '(#' + escapeHtml(p.number) + ')' : ''}
+            </button>
+          `).join("");
+          document.getElementById("coach-goalie-modal").showModal();
+          return;
+        }
+
+        if (goalkeepers.length > 1) {
+          // Plusieurs gardiennes → demander laquelle
+          _coachPendingMatchData = { scored, trainings, maxT3, maxT5 };
+          const listDiv = document.getElementById("coach-goalie-modal-list");
+          document.getElementById("coach-goalie-modal-title").textContent = "Qui sera gardienne ?";
+          listDiv.innerHTML = goalkeepers.map(g => `
+            <button class="btn btn-outline btn-sm justify-start" onclick="coachConfirmGoalie(${g.id})">
+              ${escapeHtml(g.name)} ${g.number ? '(#' + escapeHtml(g.number) + ')' : ''} — Niveau ${g.level || 2}
+            </button>
+          `).join("");
+          document.getElementById("coach-goalie-modal").showModal();
+          return;
+        }
+
+        // 1 gardienne → pas besoin de demander
+        coachFinalizeSheet(scored, trainings, maxT3, maxT5, goalkeepers[0].id);
+      }
+
+      function coachConfirmGoalie(goalieId) {
+        document.getElementById("coach-goalie-modal").close();
+        if (!_coachPendingMatchData) return;
+        const { scored, trainings, maxT3, maxT5 } = _coachPendingMatchData;
+        _coachPendingMatchData = null;
+        coachFinalizeSheet(scored, trainings, maxT3, maxT5, goalieId);
+      }
+
+      function coachFinalizeSheet(scored, trainings, maxT3, maxT5, chosenGoalieId) {
+        const goalkeepers = scored.filter(p => isGoalkeeper(p));
+        const chosen = scored.find(p => p.id === chosenGoalieId);
+        const nonGoalkeepers = scored.filter(p => !isGoalkeeper(p) && (!chosen || p.id !== chosen.id));
 
         let selected = [], deliberation = [], excluded = [];
 
@@ -414,15 +612,24 @@
           return false;
         }
 
-        // Selectionner la gardienne en priorite (max 1)
-        if (goalkeepers.length > 0) {
-          const gk = goalkeepers[0];
-          gk._reason = "Gardienne — priorite absolue (niveau " + (gk.level || 2) + ").";
-          selected.push(gk);
-          countPlayer(gk);
-          for (let g = 1; g < goalkeepers.length; g++) {
-            goalkeepers[g]._reason = "Gardienne remplacante (1 seule gardienne selectionnee).";
-            excluded.push(goalkeepers[g]);
+        // Gardienne choisie par le coach (peut etre une remplacante)
+        if (chosen) {
+          const isReplacement = !isGoalkeeper(chosen);
+          const goalieEntry = isReplacement
+            ? { ...chosen, _originalPos: chosen.position_1, position_1: "gardienne" }
+            : { ...chosen };
+          goalieEntry._reason = isReplacement
+            ? "Remplacante au poste de gardienne (choisie par le coach)."
+            : "Gardienne — choisie par le coach (niveau " + (chosen.level || 2) + ").";
+          selected.push(goalieEntry);
+          filledByPos["gardienne"] = 1;
+          filledByGroup["gardienne"] = 1;
+          // Exclure les autres gardiennes de metier
+          for (const g of goalkeepers) {
+            if (g.id !== chosen.id) {
+              g._reason = "Gardienne non selectionnee (une autre a ete choisie).";
+              excluded.push(g);
+            }
           }
         }
 
@@ -560,6 +767,135 @@
         renderCoachMatchResult();
       }
 
+      // ===================== FIELD VIEW =====================
+      const GROUP_COLORS = { gardienne: "fc-g", defense: "fc-def", milieu: "fc-mil", attaque: "fc-att" };
+      const GROUP_DEFAULT_POS = {
+        gardienne: "gardienne", defense: "defense_centrale",
+        milieu: "milieu_centre", attaque: "attaquante_centre",
+      };
+      const GROUP_TARGETS = { gardienne: 1, defense: 5, milieu: 5, attaque: 3 };
+      const GROUP_SHORT = { gardienne: "G", defense: "DEF", milieu: "MIL", attaque: "ATT" };
+
+      function coachFieldCardHtml(p) {
+        const natPos = p._originalPos || p.position_1;
+        const natGroup = POS_GROUPS[natPos] || "milieu";
+        const lbl = POS_LABELS[natPos] || "?";
+        const cls = GROUP_COLORS[natGroup] || "fc-mil";
+        const num = p.number ? "#" + escapeHtml(p.number) + " " : "";
+        return `<div class="field-card" data-player-id="${p.id}"><span class="field-card-pos ${cls}">${lbl}</span><span>${num}${escapeHtml(p.name)}</span></div>`;
+      }
+
+      function renderCoachFieldView() {
+        const { selected, deliberation, excluded } = coachMatchState;
+        const byGroup = { attaque: [], milieu: [], defense: [], gardienne: [] };
+        for (const p of selected) {
+          const grp = POS_GROUPS[p.position_1] || "milieu";
+          byGroup[grp].push(p);
+        }
+        for (const grp of ["attaque", "milieu", "defense", "gardienne"]) {
+          const el = document.querySelector(`#coach-field-view #field-terrain .field-drop-zone[data-group="${grp}"] .field-row-players`);
+          if (el) el.innerHTML = byGroup[grp].map(p => coachFieldCardHtml(p)).join("");
+        }
+        const bench = [...deliberation, ...excluded];
+        const benchEl = document.querySelector("#coach-field-view #field-bench .field-row-players");
+        if (benchEl) benchEl.innerHTML = bench.length > 0
+          ? bench.map(p => coachFieldCardHtml(p)).join("")
+          : '<span style="font-size:11px;opacity:0.35;font-style:italic;color:var(--bc)">Vide</span>';
+
+        const compDiv = document.getElementById("coach-field-comp");
+        if (compDiv) {
+          compDiv.innerHTML = Object.entries(GROUP_SHORT).map(([grp, lbl]) => {
+            const count = byGroup[grp].length;
+            const target = GROUP_TARGETS[grp];
+            let cls;
+            if (count === target) cls = "bg-success/20 text-success";
+            else if (count < target) cls = "bg-warning/20 text-warning";
+            else cls = "bg-info/20 text-info";
+            return `<span class="field-comp-badge ${cls}">${lbl} ${count}/${target}</span>`;
+          }).join("") + `<span class="field-comp-badge ${selected.length === 16 ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}">Total ${selected.length}/16</span>`;
+        }
+      }
+
+      // ===================== COACH FIELD DRAG & DROP =====================
+      let coachFieldDrag = null;
+
+      function initCoachFieldDrag() {
+        const view = document.getElementById("coach-field-view");
+        if (!view) return;
+        view.addEventListener("pointerdown", (e) => {
+          const card = e.target.closest(".field-card");
+          if (!card) return;
+          e.preventDefault();
+          const rect = card.getBoundingClientRect();
+          const ghost = card.cloneNode(true);
+          ghost.classList.add("field-ghost");
+          Object.assign(ghost.style, {
+            position: "fixed", width: rect.width + "px",
+            pointerEvents: "none", zIndex: "9999",
+            left: rect.left + "px", top: rect.top + "px",
+          });
+          document.body.appendChild(ghost);
+          card.classList.add("dragging-source");
+          coachFieldDrag = {
+            id: parseInt(card.dataset.playerId),
+            ghost, source: card,
+            ox: e.clientX - rect.left, oy: e.clientY - rect.top,
+          };
+          document.addEventListener("pointermove", onCoachFieldMove);
+          document.addEventListener("pointerup", onCoachFieldUp);
+        });
+      }
+
+      function onCoachFieldMove(e) {
+        if (!coachFieldDrag) return;
+        e.preventDefault();
+        coachFieldDrag.ghost.style.left = (e.clientX - coachFieldDrag.ox) + "px";
+        coachFieldDrag.ghost.style.top = (e.clientY - coachFieldDrag.oy) + "px";
+        document.querySelectorAll(".field-drop-zone").forEach(z => z.classList.remove("drag-over"));
+        coachFieldDrag.ghost.style.display = "none";
+        const under = document.elementFromPoint(e.clientX, e.clientY);
+        coachFieldDrag.ghost.style.display = "";
+        const zone = under && under.closest(".field-drop-zone");
+        if (zone) zone.classList.add("drag-over");
+      }
+
+      function onCoachFieldUp(e) {
+        document.removeEventListener("pointermove", onCoachFieldMove);
+        document.removeEventListener("pointerup", onCoachFieldUp);
+        if (!coachFieldDrag) return;
+        coachFieldDrag.ghost.remove();
+        coachFieldDrag.source.classList.remove("dragging-source");
+        document.querySelectorAll(".field-drop-zone").forEach(z => z.classList.remove("drag-over"));
+        coachFieldDrag.ghost.style.display = "none";
+        const under = document.elementFromPoint(e.clientX, e.clientY);
+        const zone = under && under.closest(".field-drop-zone");
+        if (zone) handleCoachFieldDrop(coachFieldDrag.id, zone.dataset.group);
+        coachFieldDrag = null;
+      }
+
+      function handleCoachFieldDrop(playerId, targetGroup) {
+        const s = coachMatchState;
+        let player = null;
+        for (const list of [s.selected, s.deliberation, s.excluded]) {
+          const idx = list.findIndex(p => p.id === playerId);
+          if (idx !== -1) { [player] = list.splice(idx, 1); break; }
+        }
+        if (!player) return;
+        if (targetGroup === "bench") {
+          s.excluded.push(player);
+        } else {
+          if (!player._originalPos) player._originalPos = player.position_1;
+          const origPos = player._originalPos;
+          let bestPos = GROUP_DEFAULT_POS[targetGroup];
+          for (const pos of [origPos, player.position_2, player.position_3]) {
+            if (pos && POS_GROUPS[pos] === targetGroup) { bestPos = pos; break; }
+          }
+          player.position_1 = bestPos;
+          s.selected.push(player);
+        }
+        renderCoachMatchResult();
+      }
+
       function renderCoachMatchResult() {
         const { selected, deliberation, excluded, maxT3, maxT5 } = coachMatchState;
 
@@ -603,6 +939,8 @@
         } else {
           exclSection.classList.add("hidden");
         }
+
+        renderCoachFieldView();
       }
 
       function coachAdd(id) {
@@ -668,10 +1006,23 @@
           ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(pad + totalW, y); ctx.stroke();
         });
 
-        const link = document.createElement("a");
-        link.download = "feuille-de-match.png";
-        link.href = canvas.toDataURL("image/png");
-        link.click();
+        canvas.toBlob(async (blob) => {
+          if (!blob) return;
+          if (navigator.share && navigator.canShare) {
+            const file = new File([blob], "feuille-de-match.png", { type: "image/png" });
+            if (navigator.canShare({ files: [file] })) {
+              try { await navigator.share({ files: [file] }); return; } catch {}
+            }
+          }
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.download = "feuille-de-match.png";
+          link.href = url;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(url), 5000);
+        }, "image/png");
       }
 
       // ===================== RENDER ALL =====================
@@ -686,6 +1037,7 @@
 
       document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("password-input").focus();
+        initCoachFieldDrag();
       });
     </script>
   </body>
