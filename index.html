@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Panthères - Hockey</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -457,6 +458,18 @@
             </button>
           </div>
 
+          <!-- Modal choix de gardienne -->
+          <dialog id="goalie-modal" class="modal">
+            <div class="modal-box">
+              <h3 id="goalie-modal-title" class="font-bold text-lg mb-3">Qui sera gardienne ?</h3>
+              <div id="goalie-modal-list" class="flex flex-col gap-2"></div>
+              <div class="modal-action">
+                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('goalie-modal').close()">Annuler</button>
+              </div>
+            </div>
+            <form method="dialog" class="modal-backdrop"><button>close</button></form>
+          </dialog>
+
           <!-- Feuille de match générée -->
           <div id="match-sheet" class="hidden mt-6">
             <div class="divider text-sm">FEUILLE DE MATCH</div>
@@ -503,9 +516,27 @@
 
     <script>
       // ===================== API HELPERS =====================
+      const CACHE_PREFIX = "pantheres_cache_";
+
+      function cacheGet(action) {
+        try {
+          const raw = localStorage.getItem(CACHE_PREFIX + action);
+          if (!raw) return null;
+          return JSON.parse(raw);
+        } catch { return null; }
+      }
+
+      function cacheSet(action, data) {
+        try {
+          localStorage.setItem(CACHE_PREFIX + action, JSON.stringify(data));
+        } catch { /* quota exceeded — ignore */ }
+      }
+
       async function apiGet(action) {
         const res = await fetch("api.php?action=" + action);
-        return res.json();
+        const data = await res.json();
+        cacheSet(action, data);
+        return data;
       }
 
       async function apiPost(action, data) {
@@ -693,6 +724,10 @@
         return p1;
       }
 
+      function isGoalkeeper(p) {
+        return p.position_1 === "gardienne";
+      }
+
       function getPlayerGroups(player) {
         const groups = [];
         for (const key of ["position_1", "position_2", "position_3"]) {
@@ -707,6 +742,9 @@
 
       // ===================== MATCH SHEET STATE =====================
       let matchState = { selected: [], deliberation: [], excluded: [], trainings: [] };
+
+      // Données préparées en attente du choix de gardienne
+      let _pendingMatchData = null;
 
       async function generateMatchSheet() {
         const [players, trainings] = await Promise.all([
@@ -736,33 +774,66 @@
           return { ...p, pres3, pres5 };
         });
 
+        // Identifier les gardiennes disponibles parmi les sélectionnées
+        const goalkeepers = scored.filter(p => isGoalkeeper(p));
+        goalkeepers.sort((a, b) => (a.level || 2) - (b.level || 2));
+
+        if (goalkeepers.length === 0) {
+          // Aucune gardienne → demander qui remplace
+          _pendingMatchData = { scored, trainings };
+          const listDiv = document.getElementById("goalie-modal-list");
+          document.getElementById("goalie-modal-title").textContent = "Aucune gardienne disponible — qui la remplace ?";
+          listDiv.innerHTML = scored.map(p => `
+            <button class="btn btn-outline btn-sm justify-start" onclick="confirmGoalie(${p.id})">
+              ${escapeHtml(p.name)} ${p.number ? '(#' + escapeHtml(p.number) + ')' : ''}
+            </button>
+          `).join("");
+          document.getElementById("goalie-modal").showModal();
+          return;
+        }
+
+        if (goalkeepers.length > 1) {
+          // Plusieurs gardiennes → demander laquelle
+          _pendingMatchData = { scored, trainings };
+          const listDiv = document.getElementById("goalie-modal-list");
+          document.getElementById("goalie-modal-title").textContent = "Qui sera gardienne ?";
+          listDiv.innerHTML = goalkeepers.map(g => `
+            <button class="btn btn-outline btn-sm justify-start" onclick="confirmGoalie(${g.id})">
+              ${escapeHtml(g.name)} ${g.number ? '(#' + escapeHtml(g.number) + ')' : ''} — Niveau ${g.level || 2}
+            </button>
+          `).join("");
+          document.getElementById("goalie-modal").showModal();
+          return;
+        }
+
+        // 1 gardienne → pas besoin de demander
+        finalizeMatchSheet(scored, trainings, goalkeepers[0].id);
+      }
+
+      function confirmGoalie(goalieId) {
+        document.getElementById("goalie-modal").close();
+        if (!_pendingMatchData) return;
+        const { scored, trainings } = _pendingMatchData;
+        _pendingMatchData = null;
+        finalizeMatchSheet(scored, trainings, goalieId);
+      }
+
+      function finalizeMatchSheet(scored, trainings, chosenGoalieId) {
         // ============================================================
         // LOGIQUE DE SÉLECTION
         // ============================================================
-        //
+        // Étape 0 : Gardienne choisie par le coach
         // Étape 1 : Tri par présences (3 derniers desc, puis 5 derniers desc)
         // Étape 2 : Si <= 16, toutes sélectionnées
         // Étape 3 : Au-dessus du seuil → sélectionnées directement
-        // Étape 4 : Départage des égalités, tri par score composite :
-        //   a) Score position (cumulé) : pos comble un besoin ? pos1=3pts, pos2=2pts, pos3=1pt
-        //   b) Niveau (1=fort, 2=moyen, 3=faible)
-        //   c) Besoin spécifique : places restantes dans la position spécifique
-        //   d) Position saturée → malus
-        // Étape 5 : Sélection une par une, délibération uniquement
-        //           si les dernières candidates ont un score strictement identique
-        //
+        // Étape 4 : Départage des égalités par score composite
+        // Étape 5 : Délibération si score identique
         // ============================================================
-
-        scored.sort((a, b) => {
-          if (b.pres3 !== a.pres3) return b.pres3 - a.pres3;
-          return b.pres5 - a.pres5;
-        });
 
         let selected = [];
         let deliberation = [];
         let excluded = [];
 
-        // Compteurs de positions remplies
         const filledByPos = {};
         for (const pos in POS_MAXIMUMS) filledByPos[pos] = 0;
         const filledByGroup = { gardienne: 0, defense: 0, milieu: 0, attaque: 0 };
@@ -786,11 +857,35 @@
           return false;
         }
 
-        if (scored.length <= 16) {
-          selected = scored;
-          selected.forEach(countPlayer);
+        // Gardienne choisie par le coach (peut être une remplaçante)
+        const goalkeepers = scored.filter(p => isGoalkeeper(p));
+        const chosen = scored.find(p => p.id === chosenGoalieId);
+        const nonGoalkeepers = scored.filter(p => !isGoalkeeper(p) && (!chosen || p.id !== chosen.id));
+
+        if (chosen) {
+          // Forcer la position gardienne pour ce match (même si c'est une remplaçante)
+          const goalieEntry = { ...chosen, _originalPos: chosen.position_1, position_1: "gardienne" };
+          selected.push(goalieEntry);
+          filledByPos["gardienne"] = 1;
+          filledByGroup["gardienne"] = 1;
+          // Exclure les autres gardiennes de métier
+          for (const g of goalkeepers) {
+            if (g.id !== chosen.id) excluded.push(g);
+          }
+        }
+
+        nonGoalkeepers.sort((a, b) => {
+          if (b.pres3 !== a.pres3) return b.pres3 - a.pres3;
+          return b.pres5 - a.pres5;
+        });
+
+        const spotsTotal = 16 - selected.length;
+
+        if (nonGoalkeepers.length <= spotsTotal) {
+          nonGoalkeepers.forEach(countPlayer);
+          selected.push(...nonGoalkeepers);
         } else {
-          const cutoff = scored[15];
+          const cutoff = nonGoalkeepers[spotsTotal - 1];
           const cutPres3 = cutoff.pres3;
           const cutPres5 = cutoff.pres5;
 
@@ -798,7 +893,7 @@
           const tied = [];
           const below = [];
 
-          for (const p of scored) {
+          for (const p of nonGoalkeepers) {
             if (p.pres3 > cutPres3 || (p.pres3 === cutPres3 && p.pres5 > cutPres5)) {
               above.push(p);
             } else if (p.pres3 === cutPres3 && p.pres5 === cutPres5) {
@@ -808,15 +903,15 @@
             }
           }
 
-          selected = [...above];
-          selected.forEach(countPlayer);
+          above.forEach(countPlayer);
+          selected.push(...above);
 
           const spotsLeft = 16 - selected.length;
 
           if (tied.length <= spotsLeft) {
             tied.forEach(countPlayer);
             selected.push(...tied);
-            excluded = below;
+            excluded.push(...below);
           } else {
             // --- DÉPARTAGE DES ÉGALITÉS ---
 
@@ -1020,13 +1115,11 @@
       }
 
       function exportMatchSheetPNG() {
-        const { selected, trainings } = matchState;
-        const maxT3 = Math.min(3, trainings.length);
-        const maxT5 = Math.min(5, trainings.length);
+        const { selected } = matchState;
         const title = document.getElementById("match-sheet-date").textContent;
 
-        const cols = ["#", "N°", "Nom", "Pos.", "3 dern.", "5 dern."];
-        const colWidths = [40, 50, 200, 60, 70, 70];
+        const cols = ["N°", "Nom", "Pos."];
+        const colWidths = [60, 240, 80];
         const totalW = colWidths.reduce((a, b) => a + b, 0);
         const rowH = 32;
         const headerH = 36;
@@ -1083,12 +1176,9 @@
           }
           ctx.fillStyle = "#000000";
           const values = [
-            String(rank),
             p.number || "-",
             p.name,
             posLabel(p),
-            p.pres3 + "/" + maxT3,
-            p.pres5 + "/" + maxT5,
           ];
           let rx = pad;
           values.forEach((val, i) => {
@@ -1316,15 +1406,27 @@
       }
 
       // ===================== RENDER ALL =====================
+      function renderFromData(players, trainings) {
+        renderTrainingChecklistFromData(players);
+        renderPresenceTableFromData(players, trainings);
+        renderMatchChecklistFromData(players);
+      }
+
       async function renderAll() {
+        // Phase 1 : affichage instantané depuis le cache
+        const cachedPlayers = cacheGet("get_players");
+        const cachedTrainings = cacheGet("get_trainings");
+        if (cachedPlayers && cachedTrainings) {
+          renderFromData(cachedPlayers, cachedTrainings);
+        }
+
+        // Phase 2 : rafraîchir depuis le serveur
         const [players, trainings] = await Promise.all([
           apiGet("get_players"),
           apiGet("get_trainings"),
         ]);
 
-        renderTrainingChecklistFromData(players);
-        renderPresenceTableFromData(players, trainings);
-        renderMatchChecklistFromData(players);
+        renderFromData(players, trainings);
 
         await Promise.all([
           renderImportantMsg(),
