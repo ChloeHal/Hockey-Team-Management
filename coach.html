@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pantheres - Coach</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -65,6 +66,42 @@
               Sauvegarde automatique.
             </p>
             <div id="coach-players-list" class="space-y-3"></div>
+          </div>
+        </div>
+
+        <!-- Feuille de match -->
+        <div class="card bg-base-100 shadow-xl mt-3">
+          <div class="card-body p-3 sm:p-6">
+            <h2 class="card-title text-lg sm:text-xl mb-3">Feuille de match (detail coach)</h2>
+            <p class="text-xs sm:text-sm text-base-content/60 mb-3">
+              Coche les joueuses disponibles puis genere la feuille. Les raisons de selection/exclusion sont detaillees.
+            </p>
+            <div id="coach-match-checklist" class="grid grid-cols-2 sm:grid-cols-3 gap-1 mb-3"></div>
+            <div class="flex gap-2 mb-3">
+              <button class="btn btn-sm flex-1" onclick="coachSelectAll()">Toutes</button>
+              <button class="btn btn-sm flex-1" onclick="coachDeselectAll()">Aucune</button>
+            </div>
+            <button class="btn btn-accent w-full" onclick="coachGenerateSheet()">Generer la feuille de match</button>
+
+            <div id="coach-match-result" class="hidden mt-4">
+              <div class="divider text-sm">RESULTAT</div>
+              <div id="coach-match-date" class="text-center font-bold mb-3"></div>
+
+              <h3 class="font-bold text-sm mb-2 text-success">Selectionnees</h3>
+              <div id="coach-selected-list" class="space-y-1 mb-4"></div>
+
+              <div id="coach-deliberation-section" class="hidden">
+                <h3 class="font-bold text-sm mb-2 text-warning">Deliberation</h3>
+                <div id="coach-deliberation-list" class="space-y-1 mb-4"></div>
+              </div>
+
+              <div id="coach-excluded-section" class="hidden">
+                <h3 class="font-bold text-sm mb-2 text-error">Non selectionnees</h3>
+                <div id="coach-excluded-list" class="space-y-1 mb-4"></div>
+              </div>
+
+              <button class="btn btn-primary btn-sm w-full mt-2" onclick="coachExportPNG()">Exporter PNG</button>
+            </div>
           </div>
         </div>
 
@@ -278,14 +315,373 @@
         }
       }
 
+      // ===================== POSITION HELPERS =====================
+      const POS_LABELS = {
+        gardienne: "G", defense_centrale: "DC", defense_laterale: "DL",
+        milieu_centre: "MC", milieu_aile: "MA",
+        attaquante_centre: "AC", attaquante_aile: "AA",
+      };
+      const POS_FULL_LABELS = {
+        gardienne: "Gardienne", defense_centrale: "Def. centrale", defense_laterale: "Def. laterale",
+        milieu_centre: "Milieu centre", milieu_aile: "Milieu aile",
+        attaquante_centre: "Att. centre", attaquante_aile: "Att. aile",
+      };
+      const POS_GROUPS = {
+        gardienne: "gardienne", defense_centrale: "defense", defense_laterale: "defense",
+        milieu_centre: "milieu", milieu_aile: "milieu",
+        attaquante_centre: "attaque", attaquante_aile: "attaque",
+      };
+      const GROUP_LABELS = { gardienne: "Gardienne", defense: "Defense", milieu: "Milieu", attaque: "Attaque" };
+      const POS_MINIMUMS = { gardienne: 1, defense: 5, milieu: 5, attaque: 3 };
+      const POS_MAXIMUMS = {
+        gardienne: 1, defense_centrale: 3, defense_laterale: 3,
+        milieu_centre: 3, milieu_aile: 3, attaquante_centre: 3, attaquante_aile: 3,
+      };
+      const GROUP_MAXIMUMS = { gardienne: 1, defense: 5, milieu: 5, attaque: 3 };
+
+      function posLabel(p) { return POS_LABELS[p.position_1] || "?"; }
+
+      function isGoalkeeper(p) {
+        return p.position_1 === "gardienne";
+      }
+
+      // ===================== COACH MATCH SHEET =====================
+      let coachMatchState = { selected: [], deliberation: [], excluded: [], maxT3: 0, maxT5: 0 };
+
+      function renderCoachChecklist(players) {
+        document.getElementById("coach-match-checklist").innerHTML = players
+          .map(p => `
+            <label class="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-base-200">
+              <input type="checkbox" class="checkbox checkbox-sm checkbox-accent coach-match-check" data-player-id="${p.id}" checked>
+              <span class="text-xs sm:text-sm">${escapeHtml(p.name)}</span>
+            </label>`).join("");
+      }
+
+      function coachSelectAll() {
+        document.querySelectorAll(".coach-match-check").forEach(cb => cb.checked = true);
+      }
+      function coachDeselectAll() {
+        document.querySelectorAll(".coach-match-check").forEach(cb => cb.checked = false);
+      }
+
+      async function coachGenerateSheet() {
+        const [players, trainings] = await Promise.all([
+          apiGet("get_players"), apiGet("get_trainings"),
+        ]);
+
+        const availableIds = [];
+        document.querySelectorAll(".coach-match-check:checked").forEach(cb => {
+          availableIds.push(String(cb.dataset.playerId));
+        });
+        const available = players.filter(p => availableIds.includes(String(p.id)));
+        if (available.length === 0) { alert("Aucune joueuse selectionnee."); return; }
+
+        const maxT3 = Math.min(3, trainings.length);
+        const maxT5 = Math.min(5, trainings.length);
+
+        const scored = available.map(p => {
+          const pid = String(p.id);
+          const pres3 = trainings.slice(-3).filter(t => t.presentIds.includes(pid)).length;
+          const pres5 = trainings.slice(-5).filter(t => t.presentIds.includes(pid)).length;
+          return { ...p, pres3, pres5 };
+        });
+
+        // GARDIENNE = PRIORITE ABSOLUE (selectionnee avant tout le monde)
+        const goalkeepers = scored.filter(p => isGoalkeeper(p));
+        const nonGoalkeepers = scored.filter(p => !isGoalkeeper(p));
+
+        // Trier les gardiennes par niveau (meilleure d'abord)
+        goalkeepers.sort((a, b) => (a.level || 2) - (b.level || 2));
+
+        let selected = [], deliberation = [], excluded = [];
+
+        const filledByPos = {};
+        for (const pos in POS_MAXIMUMS) filledByPos[pos] = 0;
+        const filledByGroup = { gardienne: 0, defense: 0, milieu: 0, attaque: 0 };
+
+        function countPlayer(p) {
+          const pos1 = p.position_1;
+          if (pos1 && filledByPos.hasOwnProperty(pos1)) filledByPos[pos1]++;
+          const grp = pos1 && POS_GROUPS[pos1];
+          if (grp) filledByGroup[grp]++;
+        }
+
+        function wouldExceedMax(p) {
+          const pos1 = p.position_1;
+          if (pos1 && POS_MAXIMUMS[pos1] !== undefined && filledByPos[pos1] >= POS_MAXIMUMS[pos1]) return "pos";
+          const grp = pos1 && POS_GROUPS[pos1];
+          if (grp && GROUP_MAXIMUMS[grp] !== undefined && filledByGroup[grp] >= GROUP_MAXIMUMS[grp]) return "group";
+          return false;
+        }
+
+        // Selectionner la gardienne en priorite (max 1)
+        if (goalkeepers.length > 0) {
+          const gk = goalkeepers[0];
+          gk._reason = "Gardienne — priorite absolue (niveau " + (gk.level || 2) + ").";
+          selected.push(gk);
+          countPlayer(gk);
+          for (let g = 1; g < goalkeepers.length; g++) {
+            goalkeepers[g]._reason = "Gardienne remplacante (1 seule gardienne selectionnee).";
+            excluded.push(goalkeepers[g]);
+          }
+        }
+
+        // Trier le reste par presences
+        nonGoalkeepers.sort((a, b) => {
+          if (b.pres3 !== a.pres3) return b.pres3 - a.pres3;
+          return b.pres5 - a.pres5;
+        });
+
+        const spotsTotal = 16 - selected.length; // 15 places restantes
+
+        if (nonGoalkeepers.length <= spotsTotal) {
+          nonGoalkeepers.forEach(p => { p._reason = "Moins de 16 joueuses, toutes selectionnees."; });
+          nonGoalkeepers.forEach(countPlayer);
+          selected.push(...nonGoalkeepers);
+        } else {
+          const cutoff = nonGoalkeepers[spotsTotal - 1];
+          const cutPres3 = cutoff.pres3, cutPres5 = cutoff.pres5;
+          const above = [], tied = [], below = [];
+
+          for (const p of nonGoalkeepers) {
+            if (p.pres3 > cutPres3 || (p.pres3 === cutPres3 && p.pres5 > cutPres5)) above.push(p);
+            else if (p.pres3 === cutPres3 && p.pres5 === cutPres5) tied.push(p);
+            else below.push(p);
+          }
+
+          above.forEach(p => { p._reason = "Presences superieures (" + p.pres3 + "/" + maxT3 + ", " + p.pres5 + "/" + maxT5 + ")."; });
+          above.forEach(countPlayer);
+          selected.push(...above);
+
+          const spotsLeft = spotsTotal - above.length;
+
+          if (tied.length <= spotsLeft) {
+            tied.forEach(p => { p._reason = "A egalite (" + p.pres3 + "/" + maxT3 + ", " + p.pres5 + "/" + maxT5 + "), toutes tiennent dans les places restantes."; });
+            tied.forEach(countPlayer);
+            selected.push(...tied);
+            below.forEach(p => { p._reason = "Presences insuffisantes (" + p.pres3 + "/" + maxT3 + ", " + p.pres5 + "/" + maxT5 + ") par rapport au seuil (" + cutPres3 + "/" + maxT3 + ", " + cutPres5 + "/" + maxT5 + ")."; });
+            excluded.push(...below);
+          } else {
+            const remainingNeeds = {};
+            for (const grp in POS_MINIMUMS) remainingNeeds[grp] = Math.max(0, POS_MINIMUMS[grp] - filledByGroup[grp]);
+
+            function computeScore(p) {
+              const exceed = wouldExceedMax(p);
+              if (exceed) return { score: -1000, exceed };
+              let posScore = 0;
+              for (const slot of [{ key: "position_1", weight: 3 }, { key: "position_2", weight: 2 }, { key: "position_3", weight: 1 }]) {
+                const pos = p[slot.key];
+                const grp = pos && POS_GROUPS[pos];
+                if (grp && remainingNeeds[grp] > 0) posScore += slot.weight;
+              }
+              const levelScore = 3 - (p.level || 2);
+              let specificNeed = 0;
+              if (p.position_1 && POS_MAXIMUMS[p.position_1] !== undefined) {
+                specificNeed = POS_MAXIMUMS[p.position_1] - (filledByPos[p.position_1] || 0);
+              }
+              return { score: posScore * 1000 + levelScore * 100 + specificNeed * 10, exceed: false };
+            }
+
+            for (const p of tied) {
+              const { score, exceed } = computeScore(p);
+              p._score = score;
+              p._exceed = exceed;
+            }
+            tied.sort((a, b) => b._score - a._score);
+
+            let spotsRemaining = spotsLeft;
+            let i = 0;
+
+            while (i < tied.length && spotsRemaining > 0) {
+              const current = tied[i];
+              let j = i;
+              while (j < tied.length && tied[j]._score === current._score) j++;
+              const sameCount = j - i;
+
+              if (sameCount <= spotsRemaining) {
+                for (let k = i; k < j; k++) {
+                  const p = tied[k];
+                  if (p._score < 0) {
+                    p._reason = "Position saturee (" + (POS_FULL_LABELS[p.position_1] || "?") + ").";
+                  } else {
+                    let r = "Egalite de presences (" + p.pres3 + "/" + maxT3 + ", " + p.pres5 + "/" + maxT5 + ") → departage par composition";
+                    if ((p.level || 2) !== 2) r += " et niveau (" + p.level + ")";
+                    r += ".";
+                    p._reason = r;
+                  }
+                  countPlayer(p);
+                  const grp = p.position_1 && POS_GROUPS[p.position_1];
+                  if (grp && remainingNeeds[grp] > 0) remainingNeeds[grp]--;
+                  selected.push(p);
+                }
+                spotsRemaining -= sameCount;
+              } else {
+                const groupNames = [];
+                for (let k = i; k < j; k++) groupNames.push(tied[k].name);
+                for (let k = i; k < j; k++) {
+                  const p = tied[k];
+                  const others = groupNames.filter(n => n !== p.name);
+                  let r = "Egalite de presences (" + p.pres3 + "/" + maxT3 + ", " + p.pres5 + "/" + maxT5 + ")";
+                  r += ", meme score de composition et niveau (" + (p.level || 2) + ")";
+                  r += ". En competition avec " + others.join(", ");
+                  r += " pour " + spotsRemaining + " place" + (spotsRemaining > 1 ? "s" : "") + ".";
+                  p._reason = r;
+                  deliberation.push(p);
+                }
+              }
+              i = j;
+            }
+
+            while (i < tied.length) {
+              const p = tied[i];
+              if (p._exceed === "pos") {
+                p._reason = "Position saturee : deja " + POS_MAXIMUMS[p.position_1] + " " + (POS_FULL_LABELS[p.position_1] || "?") + " selectionnee(s).";
+              } else if (p._exceed === "group") {
+                const grp = POS_GROUPS[p.position_1];
+                p._reason = "Groupe sature : deja " + GROUP_MAXIMUMS[grp] + " " + (GROUP_LABELS[grp] || grp) + " selectionnee(s).";
+              } else {
+                p._reason = "Plus de place disponible (score insuffisant).";
+              }
+              excluded.push(p);
+              i++;
+            }
+
+            below.forEach(p => {
+              p._reason = "Presences insuffisantes (" + p.pres3 + "/" + maxT3 + ", " + p.pres5 + "/" + maxT5 + ") par rapport au seuil (" + cutPres3 + "/" + maxT3 + ", " + cutPres5 + "/" + maxT5 + ").";
+            });
+            excluded.push(...below);
+          }
+        }
+
+        coachMatchState = { selected, deliberation, excluded, maxT3, maxT5 };
+        document.getElementById("coach-match-result").classList.remove("hidden");
+        document.getElementById("coach-match-date").textContent = "Match du " +
+          new Date().toLocaleDateString("fr-BE", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+        renderCoachMatchResult();
+      }
+
+      function renderCoachMatchResult() {
+        const { selected, deliberation, excluded, maxT3, maxT5 } = coachMatchState;
+
+        function playerCard(p, rank, color, action) {
+          const btn = action === "remove"
+            ? `<button class="btn btn-error btn-xs" onclick="coachRemove(${p.id})">Retirer</button>`
+            : action === "add"
+            ? `<button class="btn btn-success btn-xs" onclick="coachAdd(${p.id})">Ajouter</button>`
+            : "";
+          return `<div class="border border-base-300 rounded-lg p-2">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-bold text-sm ${color}">${rank}</span>
+              <span class="font-bold text-sm">#${p.number || "-"}</span>
+              <span class="text-sm">${escapeHtml(p.name)}</span>
+              <span class="text-xs opacity-60">${posLabel(p)} — ${p.pres3}/${maxT3}, ${p.pres5}/${maxT5}</span>
+              <span class="ml-auto">${btn}</span>
+            </div>
+            <p class="text-xs text-base-content/60 mt-1">${escapeHtml(p._reason || "")}</p>
+          </div>`;
+        }
+
+        document.getElementById("coach-selected-list").innerHTML =
+          selected.map((p, i) => playerCard(p, i + 1, "text-success", "remove")).join("");
+
+        const delibSection = document.getElementById("coach-deliberation-section");
+        if (deliberation.length > 0) {
+          delibSection.classList.remove("hidden");
+          const spotsLeft = 16 - selected.length;
+          document.getElementById("coach-deliberation-list").innerHTML =
+            `<div class="text-xs text-warning font-bold mb-2">${deliberation.length} joueuse${deliberation.length > 1 ? "s" : ""} pour ${spotsLeft} place${spotsLeft > 1 ? "s" : ""}</div>` +
+            deliberation.map(p => playerCard(p, "?", "text-warning", "add")).join("");
+        } else {
+          delibSection.classList.add("hidden");
+        }
+
+        const exclSection = document.getElementById("coach-excluded-section");
+        if (excluded.length > 0) {
+          exclSection.classList.remove("hidden");
+          document.getElementById("coach-excluded-list").innerHTML =
+            excluded.map(p => playerCard(p, "✗", "text-error", "add")).join("");
+        } else {
+          exclSection.classList.add("hidden");
+        }
+      }
+
+      function coachAdd(id) {
+        const s = coachMatchState;
+        let idx = s.deliberation.findIndex(p => p.id === id);
+        if (idx !== -1) { s.selected.push(...s.deliberation.splice(idx, 1)); }
+        else {
+          idx = s.excluded.findIndex(p => p.id === id);
+          if (idx !== -1) s.selected.push(...s.excluded.splice(idx, 1));
+        }
+        renderCoachMatchResult();
+      }
+
+      function coachRemove(id) {
+        const idx = coachMatchState.selected.findIndex(p => p.id === id);
+        if (idx !== -1) coachMatchState.excluded.push(...coachMatchState.selected.splice(idx, 1));
+        renderCoachMatchResult();
+      }
+
+      function coachExportPNG() {
+        const { selected } = coachMatchState;
+        const title = document.getElementById("coach-match-date").textContent;
+        const cols = ["N°", "Nom", "Pos."];
+        const colWidths = [60, 240, 80];
+        const totalW = colWidths.reduce((a, b) => a + b, 0);
+        const rowH = 32, headerH = 36, titleH = 50, pad = 20;
+        const canvasH = titleH + headerH + selected.length * rowH + pad * 2;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = (totalW + pad * 2) * 2;
+        canvas.height = canvasH * 2;
+        const ctx = canvas.getContext("2d");
+        ctx.scale(2, 2);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, totalW + pad * 2, canvasH);
+
+        ctx.fillStyle = "#000000";
+        ctx.font = "bold 16px Rubik, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(title, (totalW + pad * 2) / 2, pad + 24);
+
+        let y = pad + titleH;
+        ctx.fillStyle = "#f0f0f0";
+        ctx.fillRect(pad, y, totalW, headerH);
+        ctx.fillStyle = "#000000";
+        ctx.font = "bold 13px Rubik, sans-serif";
+        ctx.textAlign = "left";
+        let x = pad;
+        cols.forEach((col, i) => { ctx.fillText(col, x + 6, y + 22); x += colWidths[i]; });
+        y += headerH;
+        ctx.strokeStyle = "#000000"; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(pad + totalW, y); ctx.stroke();
+
+        ctx.font = "13px Rubik, sans-serif"; ctx.lineWidth = 0.5; ctx.strokeStyle = "#dddddd";
+        selected.forEach((p, i) => {
+          if (i % 2 === 1) { ctx.fillStyle = "#f9f9f9"; ctx.fillRect(pad, y, totalW, rowH); }
+          ctx.fillStyle = "#000000";
+          const vals = [p.number || "-", p.name, posLabel(p)];
+          let rx = pad;
+          vals.forEach((v, vi) => { ctx.fillText(v, rx + 6, y + 21, colWidths[vi] - 12); rx += colWidths[vi]; });
+          y += rowH;
+          ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(pad + totalW, y); ctx.stroke();
+        });
+
+        const link = document.createElement("a");
+        link.download = "feuille-de-match.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      }
+
       // ===================== RENDER ALL =====================
       async function renderAll() {
         const [players, trainings] = await Promise.all([
-          apiGet("get_players"),
-          apiGet("get_trainings"),
+          apiGet("get_players"), apiGet("get_trainings"),
         ]);
         renderCoachTable(players);
         renderTrainingsList(trainings);
+        renderCoachChecklist(players);
       }
 
       document.addEventListener("DOMContentLoaded", () => {
