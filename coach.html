@@ -85,6 +85,7 @@
       .fc-mil { background: #059669; }
       .fc-att { background: #dc2626; }
       .field-card.dragging-source { opacity: 0.25; }
+      .field-card-name-warn { color: #e67e22; font-weight: 600; }
       .field-ghost {
         transform: scale(1.08);
         box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
@@ -112,12 +113,14 @@
         border-radius: 6px;
       }
       @media (max-width: 640px) {
-        .field-row { padding: 12px 6px 12px 34px; min-height: 48px; gap: 4px; }
-        .field-card { font-size: 10px; padding: 3px 6px; }
-        .field-card-pos { font-size: 8px; padding: 1px 3px; }
+        .field-row { padding: 12px 6px 12px 34px; min-height: 52px; gap: 5px; }
+        .field-card { font-size: 12px; padding: 6px 10px; border-radius: 8px; min-height: 32px; }
+        .field-card-pos { font-size: 10px; padding: 2px 5px; }
         .field-row-label { font-size: 9px; left: 4px; }
-        #field-bench { padding: 8px 6px 8px 34px; }
+        #field-bench { padding: 10px 6px 10px 34px; gap: 5px; }
+        #field-bench .field-card { min-height: 32px; }
         #field-terrain::after { width: 50px; height: 50px; }
+        .field-comp-badge { font-size: 12px; padding: 3px 10px; }
       }
     </style>
   </head>
@@ -163,11 +166,12 @@
         </div>
 
         <!-- Position & Niveau -->
-        <div class="card bg-base-100 shadow-xl mt-3">
-          <div class="card-body p-3 sm:p-6">
-            <h2 class="card-title text-lg sm:text-xl mb-3">
-              Position & Niveau des joueuses
-            </h2>
+        <div class="collapse collapse-arrow bg-base-100 shadow-xl mt-3">
+          <input type="checkbox" />
+          <div class="collapse-title font-medium text-lg sm:text-xl">
+            Position & Niveau des joueuses
+          </div>
+          <div class="collapse-content">
             <p class="text-xs sm:text-sm text-base-content/60 mb-4">
               Pos. 1 = preferee, Pos. 2 = plan B, Pos. 3 = plan C.
               Niveau : 1 (fort) a 3 (faible).
@@ -209,6 +213,7 @@
 
               <!-- Vue terrain -->
               <div id="coach-field-view" class="mb-4">
+                <p class="text-xs text-base-content/60 mb-2 text-center">Glisse les joueuses entre les lignes pour ajuster la composition. Clique pour changer de poste dans la meme ligne. <span class="text-warning font-semibold">Orange</span> = hors-poste.</p>
                 <div id="coach-field-comp" class="flex flex-wrap gap-2 justify-center mb-3"></div>
                 <div id="field-terrain">
                   <div class="field-row field-drop-zone" data-group="attaque">
@@ -238,7 +243,7 @@
               <div class="collapse collapse-arrow bg-base-200 rounded-lg mb-3">
                 <input type="checkbox" />
                 <div class="collapse-title text-sm font-medium py-2 min-h-0">Detail (raisons)</div>
-                <div class="collapse-content">
+                <div class="collapse-content overflow-x-hidden">
 
               <h3 class="font-bold text-sm mb-2 text-success">Selectionnees</h3>
               <div id="coach-selected-list" class="space-y-1 mb-4"></div>
@@ -776,13 +781,25 @@
       const GROUP_TARGETS = { gardienne: 1, defense: 5, milieu: 5, attaque: 3 };
       const GROUP_SHORT = { gardienne: "G", defense: "DEF", milieu: "MIL", attaque: "ATT" };
 
-      function coachFieldCardHtml(p) {
-        const natPos = p._originalPos || p.position_1;
-        const natGroup = POS_GROUPS[natPos] || "milieu";
-        const lbl = POS_LABELS[natPos] || "?";
-        const cls = GROUP_COLORS[natGroup] || "fc-mil";
+      function coachIsOutOfPosition(p) {
+        const currentGroup = POS_GROUPS[p.position_1];
+        const origPos = p._originalPos || p.position_1;
+        for (const pos of [origPos, p.position_2, p.position_3]) {
+          if (pos && POS_GROUPS[pos] === currentGroup) return false;
+        }
+        return true;
+      }
+
+      function coachFieldCardHtml(p, isBench) {
+        const currentPos = p.position_1;
+        const currentGroup = POS_GROUPS[currentPos] || "milieu";
+        const lbl = POS_LABELS[currentPos] || "?";
+        const cls = GROUP_COLORS[currentGroup] || "fc-mil";
         const num = p.number ? "#" + escapeHtml(p.number) + " " : "";
-        return `<div class="field-card" data-player-id="${p.id}"><span class="field-card-pos ${cls}">${lbl}</span><span>${num}${escapeHtml(p.name)}</span></div>`;
+        const warn = !isBench && coachIsOutOfPosition(p) ? " field-card-name-warn" : "";
+        return `<div class="field-card" data-player-id="${p.id}">` +
+          `<span class="field-card-pos ${cls}">${lbl}</span>` +
+          `<span class="${warn.trim()}">${num}${escapeHtml(p.name)}</span></div>`;
       }
 
       function renderCoachFieldView() {
@@ -794,12 +811,12 @@
         }
         for (const grp of ["attaque", "milieu", "defense", "gardienne"]) {
           const el = document.querySelector(`#coach-field-view #field-terrain .field-drop-zone[data-group="${grp}"] .field-row-players`);
-          if (el) el.innerHTML = byGroup[grp].map(p => coachFieldCardHtml(p)).join("");
+          if (el) el.innerHTML = byGroup[grp].map(p => coachFieldCardHtml(p, false)).join("");
         }
         const bench = [...deliberation, ...excluded];
         const benchEl = document.querySelector("#coach-field-view #field-bench .field-row-players");
         if (benchEl) benchEl.innerHTML = bench.length > 0
-          ? bench.map(p => coachFieldCardHtml(p)).join("")
+          ? bench.map(p => coachFieldCardHtml(p, true)).join("")
           : '<span style="font-size:11px;opacity:0.35;font-style:italic;color:var(--bc)">Vide</span>';
 
         const compDiv = document.getElementById("coach-field-comp");
@@ -816,8 +833,31 @@
         }
       }
 
-      // ===================== COACH FIELD DRAG & DROP =====================
+      // ===================== COACH FIELD DRAG & DROP + CLICK =====================
       let coachFieldDrag = null;
+      const COACH_DRAG_THRESHOLD = 8;
+
+      function getCoachPositionsForGroup(p, group) {
+        const origPos = p._originalPos || p.position_1;
+        const positions = [];
+        for (const pos of [origPos, p.position_2, p.position_3]) {
+          if (pos && POS_GROUPS[pos] === group && !positions.includes(pos)) positions.push(pos);
+        }
+        return positions;
+      }
+
+      function cycleCoachFieldPosition(playerId) {
+        const p = coachMatchState.selected.find(pl => pl.id === playerId);
+        if (!p) return;
+        const group = POS_GROUPS[p.position_1];
+        if (!group) return;
+        if (!p._originalPos) p._originalPos = p.position_1;
+        const positions = getCoachPositionsForGroup(p, group);
+        if (positions.length <= 1) return;
+        const currentIdx = positions.indexOf(p.position_1);
+        p.position_1 = positions[(currentIdx + 1) % positions.length];
+        renderCoachMatchResult();
+      }
 
       function initCoachFieldDrag() {
         const view = document.getElementById("coach-field-view");
@@ -827,19 +867,12 @@
           if (!card) return;
           e.preventDefault();
           const rect = card.getBoundingClientRect();
-          const ghost = card.cloneNode(true);
-          ghost.classList.add("field-ghost");
-          Object.assign(ghost.style, {
-            position: "fixed", width: rect.width + "px",
-            pointerEvents: "none", zIndex: "9999",
-            left: rect.left + "px", top: rect.top + "px",
-          });
-          document.body.appendChild(ghost);
-          card.classList.add("dragging-source");
           coachFieldDrag = {
             id: parseInt(card.dataset.playerId),
-            ghost, source: card,
+            ghost: null, source: card,
+            startX: e.clientX, startY: e.clientY,
             ox: e.clientX - rect.left, oy: e.clientY - rect.top,
+            dragging: false, rect,
           };
           document.addEventListener("pointermove", onCoachFieldMove);
           document.addEventListener("pointerup", onCoachFieldUp);
@@ -849,6 +882,21 @@
       function onCoachFieldMove(e) {
         if (!coachFieldDrag) return;
         e.preventDefault();
+        if (!coachFieldDrag.dragging) {
+          const dx = e.clientX - coachFieldDrag.startX;
+          const dy = e.clientY - coachFieldDrag.startY;
+          if (Math.abs(dx) < COACH_DRAG_THRESHOLD && Math.abs(dy) < COACH_DRAG_THRESHOLD) return;
+          coachFieldDrag.dragging = true;
+          const ghost = coachFieldDrag.source.cloneNode(true);
+          ghost.classList.add("field-ghost");
+          Object.assign(ghost.style, {
+            position: "fixed", width: coachFieldDrag.rect.width + "px",
+            pointerEvents: "none", zIndex: "9999",
+          });
+          document.body.appendChild(ghost);
+          coachFieldDrag.ghost = ghost;
+          coachFieldDrag.source.classList.add("dragging-source");
+        }
         coachFieldDrag.ghost.style.left = (e.clientX - coachFieldDrag.ox) + "px";
         coachFieldDrag.ghost.style.top = (e.clientY - coachFieldDrag.oy) + "px";
         document.querySelectorAll(".field-drop-zone").forEach(z => z.classList.remove("drag-over"));
@@ -863,13 +911,20 @@
         document.removeEventListener("pointermove", onCoachFieldMove);
         document.removeEventListener("pointerup", onCoachFieldUp);
         if (!coachFieldDrag) return;
-        coachFieldDrag.ghost.remove();
-        coachFieldDrag.source.classList.remove("dragging-source");
-        document.querySelectorAll(".field-drop-zone").forEach(z => z.classList.remove("drag-over"));
-        coachFieldDrag.ghost.style.display = "none";
-        const under = document.elementFromPoint(e.clientX, e.clientY);
-        const zone = under && under.closest(".field-drop-zone");
-        if (zone) handleCoachFieldDrop(coachFieldDrag.id, zone.dataset.group);
+        if (coachFieldDrag.dragging) {
+          coachFieldDrag.ghost.remove();
+          coachFieldDrag.source.classList.remove("dragging-source");
+          document.querySelectorAll(".field-drop-zone").forEach(z => z.classList.remove("drag-over"));
+          coachFieldDrag.ghost.style.display = "none";
+          const under = document.elementFromPoint(e.clientX, e.clientY);
+          const zone = under && under.closest(".field-drop-zone");
+          if (zone) handleCoachFieldDrop(coachFieldDrag.id, zone.dataset.group);
+        } else {
+          const row = coachFieldDrag.source.closest(".field-drop-zone");
+          if (row && row.dataset.group !== "bench") {
+            cycleCoachFieldPosition(coachFieldDrag.id);
+          }
+        }
         coachFieldDrag = null;
       }
 
@@ -905,15 +960,17 @@
             : action === "add"
             ? `<button class="btn btn-success btn-xs" onclick="coachAdd(${p.id})">Ajouter</button>`
             : "";
-          return `<div class="border border-base-300 rounded-lg p-2">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-bold text-sm ${color}">${rank}</span>
-              <span class="font-bold text-sm">#${p.number || "-"}</span>
-              <span class="text-sm">${escapeHtml(p.name)}</span>
-              <span class="text-xs opacity-60">${posLabel(p)} — ${p.pres3}/${maxT3}, ${p.pres5}/${maxT5}</span>
-              <span class="ml-auto">${btn}</span>
+          return `<div class="border border-base-300 rounded-lg p-2 overflow-hidden">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1 min-w-0">
+                <span class="font-bold text-sm ${color} shrink-0">${rank}</span>
+                <span class="font-bold text-sm shrink-0">#${p.number || "-"}</span>
+                <span class="text-sm truncate">${escapeHtml(p.name)}</span>
+                <span class="text-xs opacity-60 shrink-0">${posLabel(p)}</span>
+              </div>
+              <span class="shrink-0">${btn}</span>
             </div>
-            <p class="text-xs text-base-content/60 mt-1">${escapeHtml(p._reason || "")}</p>
+            <p class="text-xs text-base-content/60 mt-1 break-words">${escapeHtml(p._reason || "")}</p>
           </div>`;
         }
 

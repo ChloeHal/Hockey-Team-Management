@@ -822,13 +822,6 @@ html {
   content: var(--tw-content);
 }
 
-.\!card {
-  position: relative !important;
-  display: flex !important;
-  flex-direction: column !important;
-  border-radius: var(--rounded-box, 1rem) !important;
-}
-
 .card {
   position: relative;
   display: flex;
@@ -836,14 +829,21 @@ html {
   border-radius: var(--rounded-box, 1rem);
 }
 
-.\!card:focus {
-  outline: 2px solid transparent !important;
-  outline-offset: 2px !important;
+.\!card {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border-radius: var(--rounded-box, 1rem) !important;
 }
 
 .card:focus {
   outline: 2px solid transparent;
   outline-offset: 2px;
+}
+
+.\!card:focus {
+  outline: 2px solid transparent !important;
+  outline-offset: 2px !important;
 }
 
 .card-body {
@@ -858,34 +858,24 @@ html {
   flex-grow: 1;
 }
 
-.\!card figure {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
 .card figure {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.\!card.image-full {
-  display: grid !important;
+.\!card figure {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .card.image-full {
   display: grid;
 }
 
-.\!card.image-full:before {
-  position: relative !important;
-  content: "" !important;
-  z-index: 10 !important;
-  border-radius: var(--rounded-box, 1rem) !important;
-  --tw-bg-opacity: 1 !important;
-  background-color: var(--fallback-n,oklch(var(--n)/var(--tw-bg-opacity))) !important;
-  opacity: 0.75 !important;
+.\!card.image-full {
+  display: grid !important;
 }
 
 .card.image-full:before {
@@ -898,10 +888,14 @@ html {
   opacity: 0.75;
 }
 
-.\!card.image-full:before,
-    .\!card.image-full > * {
-  grid-column-start: 1 !important;
-  grid-row-start: 1 !important;
+.\!card.image-full:before {
+  position: relative !important;
+  content: "" !important;
+  z-index: 10 !important;
+  border-radius: var(--rounded-box, 1rem) !important;
+  --tw-bg-opacity: 1 !important;
+  background-color: var(--fallback-n,oklch(var(--n)/var(--tw-bg-opacity))) !important;
+  opacity: 0.75 !important;
 }
 
 .card.image-full:before,
@@ -916,23 +910,16 @@ html {
   grid-row-start: 1 !important;
 }
 
-.\!card.image-full > figure img {
-  height: 100% !important;
-  -o-object-fit: cover !important;
-     object-fit: cover !important;
-}
-
 .card.image-full > figure img {
   height: 100%;
   -o-object-fit: cover;
      object-fit: cover;
 }
 
-.\!card.image-full > .card-body {
-  position: relative !important;
-  z-index: 20 !important;
-  --tw-text-opacity: 1 !important;
-  color: var(--fallback-nc,oklch(var(--nc)/var(--tw-text-opacity))) !important;
+.\!card.image-full > figure img {
+  height: 100% !important;
+  -o-object-fit: cover !important;
+     object-fit: cover !important;
 }
 
 .card.image-full > .card-body {
@@ -940,6 +927,13 @@ html {
   z-index: 20;
   --tw-text-opacity: 1;
   color: var(--fallback-nc,oklch(var(--nc)/var(--tw-text-opacity)));
+}
+
+.\!card.image-full > .card-body {
+  position: relative !important;
+  z-index: 20 !important;
+  --tw-text-opacity: 1 !important;
+  color: var(--fallback-nc,oklch(var(--nc)/var(--tw-text-opacity))) !important;
 }
 
 .checkbox {
@@ -1959,14 +1953,6 @@ input.tab:checked + .tab-content,
   }
 }
 
-.\!card :where(figure:first-child) {
-  overflow: hidden !important;
-  border-start-start-radius: inherit !important;
-  border-start-end-radius: inherit !important;
-  border-end-start-radius: unset !important;
-  border-end-end-radius: unset !important;
-}
-
 .card :where(figure:first-child) {
   overflow: hidden;
   border-start-start-radius: inherit;
@@ -1975,12 +1961,12 @@ input.tab:checked + .tab-content,
   border-end-end-radius: unset;
 }
 
-.\!card :where(figure:last-child) {
+.\!card :where(figure:first-child) {
   overflow: hidden !important;
-  border-start-start-radius: unset !important;
-  border-start-end-radius: unset !important;
-  border-end-start-radius: inherit !important;
-  border-end-end-radius: inherit !important;
+  border-start-start-radius: inherit !important;
+  border-start-end-radius: inherit !important;
+  border-end-start-radius: unset !important;
+  border-end-end-radius: unset !important;
 }
 
 .card :where(figure:last-child) {
@@ -1991,9 +1977,12 @@ input.tab:checked + .tab-content,
   border-end-end-radius: inherit;
 }
 
-.\!card:focus-visible {
-  outline: 2px solid currentColor !important;
-  outline-offset: 2px !important;
+.\!card :where(figure:last-child) {
+  overflow: hidden !important;
+  border-start-start-radius: unset !important;
+  border-start-end-radius: unset !important;
+  border-end-start-radius: inherit !important;
+  border-end-end-radius: inherit !important;
 }
 
 .card:focus-visible {
@@ -2001,10 +1990,9 @@ input.tab:checked + .tab-content,
   outline-offset: 2px;
 }
 
-.\!card.bordered {
-  border-width: 1px !important;
-  --tw-border-opacity: 1 !important;
-  border-color: var(--fallback-b2,oklch(var(--b2)/var(--tw-border-opacity))) !important;
+.\!card:focus-visible {
+  outline: 2px solid currentColor !important;
+  outline-offset: 2px !important;
 }
 
 .card.bordered {
@@ -2013,16 +2001,22 @@ input.tab:checked + .tab-content,
   border-color: var(--fallback-b2,oklch(var(--b2)/var(--tw-border-opacity)));
 }
 
-.\!card.compact .card-body {
-  padding: 1rem !important;
-  font-size: 0.875rem !important;
-  line-height: 1.25rem !important;
+.\!card.bordered {
+  border-width: 1px !important;
+  --tw-border-opacity: 1 !important;
+  border-color: var(--fallback-b2,oklch(var(--b2)/var(--tw-border-opacity))) !important;
 }
 
 .card.compact .card-body {
   padding: 1rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
+}
+
+.\!card.compact .card-body {
+  padding: 1rem !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
 }
 
 .card-title {
@@ -2034,14 +2028,14 @@ input.tab:checked + .tab-content,
   font-weight: 600;
 }
 
-.\!card.image-full :where(figure) {
-  overflow: hidden !important;
-  border-radius: inherit !important;
-}
-
 .card.image-full :where(figure) {
   overflow: hidden;
   border-radius: inherit;
+}
+
+.\!card.image-full :where(figure) {
+  overflow: hidden !important;
+  border-radius: inherit !important;
 }
 
 .checkbox:focus {
@@ -3155,12 +3149,12 @@ details.collapse summary::-webkit-details-marker {
   height: 1.25rem;
 }
 
-.min-h-0 {
-  min-height: 0px;
-}
-
 .min-h-screen {
   min-height: 100vh;
+}
+
+.min-h-0 {
+  min-height: 0px;
 }
 
 .w-5 {
@@ -3169,6 +3163,10 @@ details.collapse summary::-webkit-details-marker {
 
 .w-full {
   width: 100%;
+}
+
+.min-w-0 {
+  min-width: 0px;
 }
 
 .max-w-5xl {
@@ -3188,6 +3186,10 @@ details.collapse summary::-webkit-details-marker {
 }
 
 .flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+.shrink-0 {
   flex-shrink: 0;
 }
 
@@ -3273,12 +3275,30 @@ details.collapse summary::-webkit-details-marker {
   margin-bottom: calc(0.75rem * var(--tw-space-y-reverse));
 }
 
+.overflow-hidden {
+  overflow: hidden;
+}
+
 .overflow-x-auto {
   overflow-x: auto;
 }
 
+.overflow-x-hidden {
+  overflow-x: hidden;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .whitespace-nowrap {
   white-space: nowrap;
+}
+
+.break-words {
+  overflow-wrap: break-word;
 }
 
 .rounded {
@@ -3321,10 +3341,6 @@ details.collapse summary::-webkit-details-marker {
   background-color: var(--fallback-b2,oklch(var(--b2)/var(--tw-bg-opacity, 1)));
 }
 
-.bg-info\/20 {
-  background-color: var(--fallback-in,oklch(var(--in)/0.2));
-}
-
 .bg-success\/20 {
   background-color: var(--fallback-su,oklch(var(--su)/0.2));
 }
@@ -3333,12 +3349,16 @@ details.collapse summary::-webkit-details-marker {
   background-color: var(--fallback-wa,oklch(var(--wa)/0.1));
 }
 
-.bg-warning\/20 {
-  background-color: var(--fallback-wa,oklch(var(--wa)/0.2));
-}
-
 .bg-warning\/5 {
   background-color: var(--fallback-wa,oklch(var(--wa)/0.05));
+}
+
+.bg-info\/20 {
+  background-color: var(--fallback-in,oklch(var(--in)/0.2));
+}
+
+.bg-warning\/20 {
+  background-color: var(--fallback-wa,oklch(var(--wa)/0.2));
 }
 
 .stroke-current {
@@ -3355,11 +3375,6 @@ details.collapse summary::-webkit-details-marker {
 
 .p-4 {
   padding: 1rem;
-}
-
-.px-0 {
-  padding-left: 0px;
-  padding-right: 0px;
 }
 
 .px-2 {
@@ -3395,6 +3410,11 @@ details.collapse summary::-webkit-details-marker {
 .py-4 {
   padding-top: 1rem;
   padding-bottom: 1rem;
+}
+
+.px-0 {
+  padding-left: 0px;
+  padding-right: 0px;
 }
 
 .text-center {
@@ -3438,6 +3458,10 @@ details.collapse summary::-webkit-details-marker {
   font-weight: 500;
 }
 
+.font-semibold {
+  font-weight: 600;
+}
+
 .uppercase {
   text-transform: uppercase;
 }
@@ -3455,11 +3479,6 @@ details.collapse summary::-webkit-details-marker {
   color: var(--fallback-er,oklch(var(--er)/var(--tw-text-opacity, 1)));
 }
 
-.text-info {
-  --tw-text-opacity: 1;
-  color: var(--fallback-in,oklch(var(--in)/var(--tw-text-opacity, 1)));
-}
-
 .text-success {
   --tw-text-opacity: 1;
   color: var(--fallback-su,oklch(var(--su)/var(--tw-text-opacity, 1)));
@@ -3468,6 +3487,11 @@ details.collapse summary::-webkit-details-marker {
 .text-warning {
   --tw-text-opacity: 1;
   color: var(--fallback-wa,oklch(var(--wa)/var(--tw-text-opacity, 1)));
+}
+
+.text-info {
+  --tw-text-opacity: 1;
+  color: var(--fallback-in,oklch(var(--in)/var(--tw-text-opacity, 1)));
 }
 
 .opacity-60 {
@@ -3500,14 +3524,14 @@ details.collapse summary::-webkit-details-marker {
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 
-.transition {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
 
-.transition-colors {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+.transition {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }

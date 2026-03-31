@@ -88,6 +88,7 @@
       .fc-mil { background: #059669; }
       .fc-att { background: #dc2626; }
       .field-card.dragging-source { opacity: 0.25; }
+      .field-card-name-warn { color: #e67e22; font-weight: 600; }
       .field-ghost {
         transform: scale(1.08);
         box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important;
@@ -117,12 +118,14 @@
         border-radius: 6px;
       }
       @media (max-width: 640px) {
-        .field-row { padding: 12px 6px 12px 34px; min-height: 48px; gap: 4px; }
-        .field-card { font-size: 10px; padding: 3px 6px; }
-        .field-card-pos { font-size: 8px; padding: 1px 3px; }
+        .field-row { padding: 12px 6px 12px 34px; min-height: 52px; gap: 5px; }
+        .field-card { font-size: 12px; padding: 6px 10px; border-radius: 8px; min-height: 32px; }
+        .field-card-pos { font-size: 10px; padding: 2px 5px; }
         .field-row-label { font-size: 9px; left: 4px; }
-        #field-bench { padding: 8px 6px 8px 34px; }
+        #field-bench { padding: 10px 6px 10px 34px; gap: 5px; }
+        #field-bench .field-card { min-height: 32px; }
         #field-terrain::after { width: 50px; height: 50px; }
+        .field-comp-badge { font-size: 12px; padding: 3px 10px; }
       }
     </style>
   </head>
@@ -593,6 +596,7 @@
 
             <!-- Vue terrain -->
             <div id="match-field-view" class="mb-4">
+              <p class="text-xs text-base-content/60 mb-2 text-center">Glisse les joueuses entre les lignes pour ajuster la composition. Clique pour changer de poste dans la meme ligne. <span class="text-warning font-semibold">Orange</span> = hors-poste.</p>
               <div id="field-comp" class="flex flex-wrap gap-2 justify-center mb-3"></div>
               <div id="field-terrain">
                 <div class="field-row field-drop-zone" data-group="attaque">
@@ -1190,15 +1194,25 @@
       const GROUP_TARGETS = { gardienne: 1, defense: 5, milieu: 5, attaque: 3 };
       const GROUP_SHORT = { gardienne: "G", defense: "DEF", milieu: "MIL", attaque: "ATT" };
 
-      function fieldCardHtml(p) {
-        const natPos = p._originalPos || p.position_1;
-        const natGroup = POS_GROUPS[natPos] || "milieu";
-        const lbl = POS_LABELS[natPos] || "?";
-        const cls = GROUP_COLORS[natGroup] || "fc-mil";
+      function isOutOfPosition(p) {
+        const currentGroup = POS_GROUPS[p.position_1];
+        const origPos = p._originalPos || p.position_1;
+        for (const pos of [origPos, p.position_2, p.position_3]) {
+          if (pos && POS_GROUPS[pos] === currentGroup) return false;
+        }
+        return true;
+      }
+
+      function fieldCardHtml(p, isBench) {
+        const currentPos = p.position_1;
+        const currentGroup = POS_GROUPS[currentPos] || "milieu";
+        const lbl = POS_LABELS[currentPos] || "?";
+        const cls = GROUP_COLORS[currentGroup] || "fc-mil";
         const num = p.number ? "#" + escapeHtml(p.number) + " " : "";
-        return `<div class="field-card" data-player-id="${p.id}">${
-          `<span class="field-card-pos ${cls}">${lbl}</span>`
-        }<span>${num}${escapeHtml(p.name)}</span></div>`;
+        const warn = !isBench && isOutOfPosition(p) ? " field-card-name-warn" : "";
+        return `<div class="field-card" data-player-id="${p.id}">` +
+          `<span class="field-card-pos ${cls}">${lbl}</span>` +
+          `<span class="${warn.trim()}">${num}${escapeHtml(p.name)}</span></div>`;
       }
 
       function renderFieldView() {
@@ -1211,14 +1225,14 @@
         }
 
         for (const grp of ["attaque", "milieu", "defense", "gardienne"]) {
-          const el = document.querySelector(`#field-terrain .field-drop-zone[data-group="${grp}"] .field-row-players`);
-          if (el) el.innerHTML = byGroup[grp].map(p => fieldCardHtml(p)).join("");
+          const el = document.querySelector(`#match-field-view #field-terrain .field-drop-zone[data-group="${grp}"] .field-row-players`);
+          if (el) el.innerHTML = byGroup[grp].map(p => fieldCardHtml(p, false)).join("");
         }
 
         const bench = [...deliberation, ...excluded];
-        const benchEl = document.querySelector("#field-bench .field-row-players");
+        const benchEl = document.querySelector("#match-field-view #field-bench .field-row-players");
         if (benchEl) benchEl.innerHTML = bench.length > 0
-          ? bench.map(p => fieldCardHtml(p)).join("")
+          ? bench.map(p => fieldCardHtml(p, true)).join("")
           : '<span style="font-size:11px;opacity:0.35;font-style:italic;color:var(--bc)">Vide</span>';
 
         // Composition indicators
@@ -1236,8 +1250,31 @@
         }
       }
 
-      // ===================== FIELD DRAG & DROP =====================
+      // ===================== FIELD DRAG & DROP + CLICK =====================
       let fieldDrag = null;
+      const DRAG_THRESHOLD = 8;
+
+      function getPlayerPositionsForGroup(p, group) {
+        const origPos = p._originalPos || p.position_1;
+        const positions = [];
+        for (const pos of [origPos, p.position_2, p.position_3]) {
+          if (pos && POS_GROUPS[pos] === group && !positions.includes(pos)) positions.push(pos);
+        }
+        return positions;
+      }
+
+      function cycleFieldPosition(playerId) {
+        const p = matchState.selected.find(pl => pl.id === playerId);
+        if (!p) return;
+        const group = POS_GROUPS[p.position_1];
+        if (!group) return;
+        if (!p._originalPos) p._originalPos = p.position_1;
+        const positions = getPlayerPositionsForGroup(p, group);
+        if (positions.length <= 1) return;
+        const currentIdx = positions.indexOf(p.position_1);
+        p.position_1 = positions[(currentIdx + 1) % positions.length];
+        renderMatchSheet();
+      }
 
       function initFieldDrag() {
         const view = document.getElementById("match-field-view");
@@ -1249,22 +1286,12 @@
           e.preventDefault();
 
           const rect = card.getBoundingClientRect();
-          const ghost = card.cloneNode(true);
-          ghost.classList.add("field-ghost");
-          Object.assign(ghost.style, {
-            position: "fixed", width: rect.width + "px",
-            pointerEvents: "none", zIndex: "9999",
-            left: (e.clientX - (e.clientX - rect.left)) + "px",
-            top: (e.clientY - (e.clientY - rect.top)) + "px",
-          });
-          document.body.appendChild(ghost);
-          card.classList.add("dragging-source");
-
           fieldDrag = {
             id: parseInt(card.dataset.playerId),
-            ghost, source: card,
-            ox: e.clientX - rect.left,
-            oy: e.clientY - rect.top,
+            ghost: null, source: card,
+            startX: e.clientX, startY: e.clientY,
+            ox: e.clientX - rect.left, oy: e.clientY - rect.top,
+            dragging: false, rect,
           };
 
           document.addEventListener("pointermove", onFieldMove);
@@ -1275,6 +1302,24 @@
       function onFieldMove(e) {
         if (!fieldDrag) return;
         e.preventDefault();
+
+        if (!fieldDrag.dragging) {
+          const dx = e.clientX - fieldDrag.startX;
+          const dy = e.clientY - fieldDrag.startY;
+          if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
+          // Start actual drag
+          fieldDrag.dragging = true;
+          const ghost = fieldDrag.source.cloneNode(true);
+          ghost.classList.add("field-ghost");
+          Object.assign(ghost.style, {
+            position: "fixed", width: fieldDrag.rect.width + "px",
+            pointerEvents: "none", zIndex: "9999",
+          });
+          document.body.appendChild(ghost);
+          fieldDrag.ghost = ghost;
+          fieldDrag.source.classList.add("dragging-source");
+        }
+
         fieldDrag.ghost.style.left = (e.clientX - fieldDrag.ox) + "px";
         fieldDrag.ghost.style.top = (e.clientY - fieldDrag.oy) + "px";
 
@@ -1291,16 +1336,21 @@
         document.removeEventListener("pointerup", onFieldUp);
         if (!fieldDrag) return;
 
-        fieldDrag.ghost.remove();
-        fieldDrag.source.classList.remove("dragging-source");
-        document.querySelectorAll(".field-drop-zone").forEach(z => z.classList.remove("drag-over"));
+        if (fieldDrag.dragging) {
+          fieldDrag.ghost.remove();
+          fieldDrag.source.classList.remove("dragging-source");
+          document.querySelectorAll(".field-drop-zone").forEach(z => z.classList.remove("drag-over"));
 
-        fieldDrag.ghost.style.display = "none";
-        const under = document.elementFromPoint(e.clientX, e.clientY);
-        const zone = under && under.closest(".field-drop-zone");
-
-        if (zone) {
-          handleFieldDrop(fieldDrag.id, zone.dataset.group);
+          fieldDrag.ghost.style.display = "none";
+          const under = document.elementFromPoint(e.clientX, e.clientY);
+          const zone = under && under.closest(".field-drop-zone");
+          if (zone) handleFieldDrop(fieldDrag.id, zone.dataset.group);
+        } else {
+          // Click — cycle position (only on field, not bench)
+          const row = fieldDrag.source.closest(".field-drop-zone");
+          if (row && row.dataset.group !== "bench") {
+            cycleFieldPosition(fieldDrag.id);
+          }
         }
         fieldDrag = null;
       }
