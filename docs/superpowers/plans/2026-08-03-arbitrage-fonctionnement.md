@@ -28,6 +28,7 @@
 - The Thunes card (which stays on the Équipe/home tab, unchanged in position) must state: the team commits to offering opponents 1 "mètre" of beer, and if soft drinks are requested, they replace the beers from the meter.
 - The "Fonctionnement" tab must include a new "Ambiance & conduite d'équipe" card with this exact policy: everyone is counted on to maintain a caring atmosphere based on continuous improvement, mutual help, and good mood; captains and the coach reserve the right to sanction/reprimand players whose behavior exceeds acceptable limits; private resolution of issues is preferred; the whole team must not get involved in conflicts (on the field, within the team, or with opponents); captains alone are responsible for defusing on-field tension, to avoid escalation and allow calm conflict resolution. It must also state: lateness to a training or match should not be shared on public channels unless it impacts the team, in order to preserve a positive and motivating dynamic for the rest of the group.
 - The "only trainings really and entirely followed count" bullet must not contradict the adjacent 75%-participation clarification — drop "entièrement" rather than keep both, since "entirely" and "starting from 75%" cannot both be literally true.
+- The "Fonctionnement" tab must include a new "Intégration de nouvelles joueuses" card with this exact policy: any player not on the team's current list who wants to join mid-year must get approval from the captains and the team before being integrated, even if she's a former team player; since the season is organized starting in August, this kind of change should be considered during that period.
 - Changes apply to `index.html` only, not `coach.html`.
 
 ## Manual Verification Setup
@@ -373,7 +374,7 @@ EOF
 - Modify: `index.html:146-167` (tablist — add third tab button)
 - Modify: `index.html:276-339` (remove "Presences" rules card from the Équipe tab)
 - Modify: `index.html:375-385` (remove "Équipement" card from the Équipe tab)
-- Modify: `index.html:673` area (insert new `page-fonctionnement` container with the two moved cards, renamed, plus new "Cotisations", "Organisation & matériel", and "Ambiance & conduite d'équipe" cards)
+- Modify: `index.html:673` area (insert new `page-fonctionnement` container with the two moved cards, renamed, plus new "Cotisations", "Organisation & matériel", "Ambiance & conduite d'équipe", and "Intégration de nouvelles joueuses" cards)
 - Modify: Thunes card (stays on Équipe tab) — add the 1-mètre-de-bière sentence
 - Modify: `index.html:710-723` (`switchTab` — handle third state)
 
@@ -710,7 +711,7 @@ Replace with:
       </div>
 
       <!-- Ambiance & conduite d'équipe -->
-      <div class="card bg-base-100 shadow-xl mt-3 mb-6">
+      <div class="card bg-base-100 shadow-xl mt-3">
         <div class="card-body p-3 sm:p-6">
           <h2 class="card-title text-lg sm:text-xl mb-3">
             Ambiance & conduite d'équipe
@@ -743,6 +744,25 @@ Replace with:
               positive et motivante pour le reste du groupe.
             </li>
           </ul>
+        </div>
+      </div>
+
+      <!-- Intégration de nouvelles joueuses -->
+      <div class="card bg-base-100 shadow-xl mt-3 mb-6">
+        <div class="card-body p-3 sm:p-6">
+          <h2 class="card-title text-lg sm:text-xl mb-3">
+            Intégration de nouvelles joueuses
+          </h2>
+          <p class="text-xs sm:text-sm">
+            Toute joueuse ne figurant pas sur la liste actuelle de l'équipe
+            et souhaitant la rejoindre en cours d'année doit obtenir
+            l'approbation des capitaines et de l'équipe avant d'être
+            intégrée — même s'il s'agit d'une ancienne joueuse de l'équipe.
+          </p>
+          <p class="mt-3 text-xs sm:text-sm">
+            L'organisation de la saison se faisant dès le mois d'août, ce
+            type de changement doit être envisagé à cette période.
+          </p>
         </div>
       </div>
     </div>
@@ -824,7 +844,7 @@ Replace with:
 
 Start the local server and open `index.html` (see Manual Verification Setup, works without a DB for this task — no API calls involved):
 1. Confirm three tabs are visible: "Équipe", "Présences", "Fonctionnement".
-2. Click "Fonctionnement": confirm it shows exactly five cards, in order: "Règles de sélection" (selection rules plus the Monday-reminder/Thursday-screenshot paragraph, the schedule-change rule, the 75%-attendance clarification, and the coach-training/friendly-match paragraph), "Equipement" (jersey/skirt rules), "Cotisations" (payment schedule/consequences plus the referee dues-reduction sentence), "Organisation & matériel" (shared responsibility for referees/equipment), and "Ambiance & conduite d'équipe" (team-conduct policy), and that the tab button gets the active style.
+2. Click "Fonctionnement": confirm it shows exactly six cards, in order: "Règles de sélection" (selection rules plus the Monday-reminder/Thursday-screenshot paragraph, the schedule-change rule, the 75%-attendance clarification, and the coach-training/friendly-match paragraph), "Equipement" (jersey/skirt rules), "Cotisations" (payment schedule/consequences plus the referee dues-reduction sentence), "Organisation & matériel" (shared responsibility for referees/equipment), "Ambiance & conduite d'équipe" (team-conduct policy, including the lateness-sharing rule), and "Intégration de nouvelles joueuses" (mid-year roster approval policy), and that the tab button gets the active style.
 3. Click back to "Équipe": confirm the "Presences"/"Équipement" cards are gone from this tab, that Thunes now includes the 1-mètre-de-bière sentence, and that Thunes, Arbitrage (with its copy button from Task 2), and Notes are still present and in the same relative order.
 4. Click "Présences": confirm the existing attendance table tab is unaffected.
 
