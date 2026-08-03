@@ -19,8 +19,9 @@
   - `2026-11-15` at `16:30`
   - `2026-11-22` at `16:30`
 - Renamed card title: the card with selection rules must be titled **"Règles de sélection"** (not "Presences") once moved, to avoid confusion with the existing "Présences" tab (attendance table).
-- The "Fonctionnement" tab must include a new "Cotisations" card with this exact policy: cotisations are requested at 3 points in the year — start of season (team charges), end of Q1 (Lucas + Q2 dues), end of year (Q2 of Lucas's coaching) — payment plans are allowed, but absent any captain being informed in advance, the assumption is a 1-month payment window, and missing it means the player cannot participate in matches.
+- The "Fonctionnement" tab must include a new "Cotisations" card with this exact policy: cotisations are requested at 3 points in the year — start of season (team charges), end of Q1 (Lucas + Q2 dues), end of year (Q2 of Lucas's coaching) — payment plans are allowed, but absent any captain being informed in advance, the assumption is a 1-month payment window, and missing it means the player cannot participate in matches. Additionally, any player who referees a match has her team dues reduced accordingly.
 - The "Règles de sélection" card must include this exact policy in addition to the existing selection-rules content: a reminder is sent every Monday, a screenshot of availabilities is taken every Thursday to hold each player accountable for entering availability in advance, and selection is based on those screenshots.
+- The "Règles de sélection" card must also include this exact policy: a request to change a training's schedule for a given week must be communicated at the latest the Monday preceding that week; such occasional changes are discouraged out of respect for everyone's organization, and attendance is not counted for those training sessions.
 - Changes apply to `index.html` only, not `coach.html`.
 
 ## Manual Verification Setup
@@ -607,6 +608,18 @@ Replace with:
               </li>
             </ul>
           </div>
+
+          <p class="mt-3 text-xs sm:text-sm">
+            En cas de volonté de changer l'horaire d'un entraînement pour une
+            semaine donnée, la demande doit être communiquée au plus tard le
+            <strong>lundi précédant</strong> la semaine concernée. Ces
+            changements ponctuels ne sont pas encouragés, par respect pour
+            l'organisation de chacune —
+            <strong
+              >les présences ne seront donc pas comptabilisées</strong
+            >
+            pour ces entraînements.
+          </p>
         </div>
       </div>
 
@@ -645,6 +658,10 @@ Replace with:
             aucune capitaine n'a été mise au courant, on considère que la
             somme peut être payée en 1 mois. Si ce délai n'est pas respecté,
             la joueuse ne pourra pas participer aux matchs.
+          </p>
+          <p class="mt-3 text-xs sm:text-sm">
+            Toute joueuse qui effectue un arbitrage voit sa cotisation
+            d'équipe diminuer en conséquence.
           </p>
         </div>
       </div>
