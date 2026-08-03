@@ -24,6 +24,8 @@
 - The "Règles de sélection" card must also include this exact policy: a request to change a training's schedule for a given week must be communicated at the latest the Monday preceding that week; such occasional changes are discouraged out of respect for everyone's organization, and attendance is not counted for those training sessions.
 - The "Règles de sélection" card must also state: any training (physical or regular) as well as any friendly match organized by the coach counts toward attendance.
 - The existing "only trainings really and entirely followed count" bullet must be clarified in place (not contradicted) to say attendance counts starting from 75% participation in the training.
+- The "Fonctionnement" tab must include a new "Organisation & matériel" card with this exact policy: everyone is responsible for matches running smoothly, including finding referees and managing equipment bags; the goalie must always know where her bag is but isn't responsible for permanently storing it at home; captains must know where the ball bag is but aren't required to retrieve it themselves; the team must find a storage location between uses and stay attentive to future needs.
+- The Thunes card (which stays on the Équipe/home tab, unchanged in position) must state: the team commits to offering opponents 1 "mètre" of beer, and if soft drinks are requested, they replace the beers from the meter.
 - Changes apply to `index.html` only, not `coach.html`.
 
 ## Manual Verification Setup
@@ -369,7 +371,8 @@ EOF
 - Modify: `index.html:146-167` (tablist — add third tab button)
 - Modify: `index.html:276-339` (remove "Presences" rules card from the Équipe tab)
 - Modify: `index.html:375-385` (remove "Équipement" card from the Équipe tab)
-- Modify: `index.html:673` area (insert new `page-fonctionnement` container with the two moved cards, renamed, plus a new "Cotisations" card)
+- Modify: `index.html:673` area (insert new `page-fonctionnement` container with the two moved cards, renamed, plus new "Cotisations" and "Organisation & matériel" cards)
+- Modify: Thunes card (stays on Équipe tab) — add the 1-mètre-de-bière sentence
 - Modify: `index.html:710-723` (`switchTab` — handle third state)
 
 **Interfaces:**
@@ -645,7 +648,7 @@ Replace with:
       </div>
 
       <!-- Cotisations -->
-      <div class="card bg-base-100 shadow-xl mt-3 mb-6">
+      <div class="card bg-base-100 shadow-xl mt-3">
         <div class="card-body p-3 sm:p-6">
           <h2 class="card-title text-lg sm:text-xl mb-3">Cotisations</h2>
           <p class="text-xs sm:text-sm">
@@ -674,13 +677,67 @@ Replace with:
           </p>
         </div>
       </div>
+
+      <!-- Organisation & matériel -->
+      <div class="card bg-base-100 shadow-xl mt-3 mb-6">
+        <div class="card-body p-3 sm:p-6">
+          <h2 class="card-title text-lg sm:text-xl mb-3">
+            Organisation & matériel
+          </h2>
+          <p class="text-xs sm:text-sm">
+            Tout le monde est responsable du bon déroulé des matchs et de
+            leur organisation : il incombe à chacune de contribuer à trouver
+            des arbitres et à gérer les sacs de matériel.
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-xs sm:text-sm mt-2">
+            <li>
+              La gardienne doit toujours savoir où se trouve sa valise, mais
+              n'est pas responsable de la stocker chez elle en permanence.
+            </li>
+            <li>
+              Les capitaines doivent savoir où se trouve le sac de balles,
+              mais ne sont pas tenues de le reprendre elles-mêmes.
+            </li>
+          </ul>
+          <p class="mt-3 text-xs sm:text-sm">
+            L'équipe doit trouver un endroit pour stocker ce matériel entre
+            les utilisations, et rester attentive aux besoins à venir pour
+            adapter au mieux la solution retenue.
+          </p>
+        </div>
+      </div>
     </div>
 
     <script>
       // ===================== API HELPERS =====================
 ```
 
-- [ ] **Step 5: Update `switchTab` to handle the third tab**
+- [ ] **Step 5: Add the drinks policy detail to the Thunes card (stays on Équipe tab)**
+
+Find (in the Thunes card, still on the Équipe tab — this card is not moving):
+```html
+          <p class="mt-3 text-xs sm:text-sm">
+            Chaque joueuse verse <strong>34 EUR</strong> en debut de saison pour
+            couvrir les boissons offertes aux adversaires. Le paiement des
+            arbitres se fait aussi via le compte commun.
+          </p>
+```
+
+Replace with:
+```html
+          <p class="mt-3 text-xs sm:text-sm">
+            Chaque joueuse verse <strong>34 EUR</strong> en debut de saison pour
+            couvrir les boissons offertes aux adversaires.
+            <strong
+              >L'équipe s'engage à offrir 1 mètre de bière aux
+              adversaires ; si des softs sont demandés, ils remplacent les
+              bières du mètre.</strong
+            >
+            Le paiement des arbitres se fait aussi via le compte commun.
+          </p>
+```
+
+- [ ] **Step 6: Update `switchTab` to handle the third tab**
 
 Find (around line 710-723):
 ```js
@@ -724,15 +781,15 @@ Replace with:
       }
 ```
 
-- [ ] **Step 6: Manually verify**
+- [ ] **Step 7: Manually verify**
 
 Start the local server and open `index.html` (see Manual Verification Setup, works without a DB for this task — no API calls involved):
 1. Confirm three tabs are visible: "Équipe", "Présences", "Fonctionnement".
-2. Click "Fonctionnement": confirm it shows exactly three cards, "Règles de sélection" (with the selection-rules content, including the Monday reminder / Thursday screenshot paragraph), "Equipement" (jersey/skirt rules), and "Cotisations" (payment schedule/consequences), and that the tab button gets the active style.
-3. Click back to "Équipe": confirm the "Presences"/"Équipement" cards are gone from this tab, and that Thunes, Arbitrage (with its copy button from Task 2), and Notes are still present and in the same relative order.
+2. Click "Fonctionnement": confirm it shows exactly four cards, in order: "Règles de sélection" (selection rules plus the Monday-reminder/Thursday-screenshot paragraph, the schedule-change rule, the 75%-attendance clarification, and the coach-training/friendly-match paragraph), "Equipement" (jersey/skirt rules), "Cotisations" (payment schedule/consequences plus the referee dues-reduction sentence), and "Organisation & matériel" (shared responsibility for referees/equipment), and that the tab button gets the active style.
+3. Click back to "Équipe": confirm the "Presences"/"Équipement" cards are gone from this tab, that Thunes now includes the 1-mètre-de-bière sentence, and that Thunes, Arbitrage (with its copy button from Task 2), and Notes are still present and in the same relative order.
 4. Click "Présences": confirm the existing attendance table tab is unaffected.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add index.html
