@@ -16,6 +16,7 @@
 - User-authored/dynamic content must never be forced lowercase or blurred. Concretely: `index.html:1636` renders `<h3 class="font-bold text-sm sm:text-base">${m.title || ""}</h3>` — a coach-authored "message important" title. Because of this, **do not add a bare `h3` CSS selector** for the lowercase/blur treatment (the spec's "h2.card-title, h3" wording would catch this dynamic title). The treatment in this plan is scoped to `.card-title` (verified below: every `card-title` occurrence in both HTML files is static text, no `${...}` interpolation) and `.btn` (button labels are always static UI chrome). Static `h3` sub-headers (e.g. "Regles de selection", "Compte commun Revolut", the goalie-modal titles, coach.html's "Selectionnees"/"Deliberation"/"Non selectionnees") are left in normal casing/font for this plan — this is a deliberate scope narrowing from the spec's literal wording, done for data-safety, not an oversight.
 - No new fonts loaded over the network — Arial Narrow/Arial are system fonts.
 - `output.css` is a build artifact — never hand-edit it; always regenerate via `npm run build`.
+- `<body class="bg-base-200 min-h-screen">` in both `index.html` and `coach.html` — `base-200` is the literal page-background color, not a spare card tone. It must be the acid lime (`#8ace00`), the same value as `primary`/`accent`, so the page backdrop is lime per the approved design (verified by rendering, not just reading the diff — see Task 1 Step 4). `base-100` (cream) is reserved for card/navbar/tab surfaces sitting on top of that backdrop. `base-200` is also used for a few in-card callout boxes (e.g. "Regles de selection", "Compte commun Revolut") and hover states — these becoming lime accents against their cream card background is an intended, approved side effect, not a bug.
 
 ---
 
@@ -71,8 +72,8 @@ Replace with:
           "neutral": "#1a1a1a",
           "neutral-content": "#faf9f2",
           "base-100": "#faf9f2",
-          "base-200": "#f0efe6",
-          "base-300": "#e4e2d4",
+          "base-200": "#8ace00",
+          "base-300": "#d8d4a8",
           "base-content": "#1a1a1a",
           "info": "oklch(68% 0.169 237.323)",
           "info-content": "oklch(97% 0.013 236.62)",
