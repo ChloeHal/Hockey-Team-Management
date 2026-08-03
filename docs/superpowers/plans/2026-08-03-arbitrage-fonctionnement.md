@@ -26,6 +26,7 @@
 - The existing "only trainings really and entirely followed count" bullet must be clarified in place (not contradicted) to say attendance counts starting from 75% participation in the training.
 - The "Fonctionnement" tab must include a new "Organisation & matériel" card with this exact policy: everyone is responsible for matches running smoothly, including finding referees and managing equipment bags; the goalie must always know where her bag is but isn't responsible for permanently storing it at home; captains must know where the ball bag is but aren't required to retrieve it themselves; the team must find a storage location between uses and stay attentive to future needs.
 - The Thunes card (which stays on the Équipe/home tab, unchanged in position) must state: the team commits to offering opponents 1 "mètre" of beer, and if soft drinks are requested, they replace the beers from the meter.
+- The "Fonctionnement" tab must include a new "Ambiance & conduite d'équipe" card with this exact policy: everyone is counted on to maintain a caring atmosphere based on continuous improvement, mutual help, and good mood; captains and the coach reserve the right to sanction/reprimand players whose behavior exceeds acceptable limits; private resolution of issues is preferred; the whole team must not get involved in conflicts (on the field, within the team, or with opponents); captains alone are responsible for defusing on-field tension, to avoid escalation and allow calm conflict resolution.
 - Changes apply to `index.html` only, not `coach.html`.
 
 ## Manual Verification Setup
@@ -371,7 +372,7 @@ EOF
 - Modify: `index.html:146-167` (tablist — add third tab button)
 - Modify: `index.html:276-339` (remove "Presences" rules card from the Équipe tab)
 - Modify: `index.html:375-385` (remove "Équipement" card from the Équipe tab)
-- Modify: `index.html:673` area (insert new `page-fonctionnement` container with the two moved cards, renamed, plus new "Cotisations" and "Organisation & matériel" cards)
+- Modify: `index.html:673` area (insert new `page-fonctionnement` container with the two moved cards, renamed, plus new "Cotisations", "Organisation & matériel", and "Ambiance & conduite d'équipe" cards)
 - Modify: Thunes card (stays on Équipe tab) — add the 1-mètre-de-bière sentence
 - Modify: `index.html:710-723` (`switchTab` — handle third state)
 
@@ -679,7 +680,7 @@ Replace with:
       </div>
 
       <!-- Organisation & matériel -->
-      <div class="card bg-base-100 shadow-xl mt-3 mb-6">
+      <div class="card bg-base-100 shadow-xl mt-3">
         <div class="card-body p-3 sm:p-6">
           <h2 class="card-title text-lg sm:text-xl mb-3">
             Organisation & matériel
@@ -704,6 +705,37 @@ Replace with:
             les utilisations, et rester attentive aux besoins à venir pour
             adapter au mieux la solution retenue.
           </p>
+        </div>
+      </div>
+
+      <!-- Ambiance & conduite d'équipe -->
+      <div class="card bg-base-100 shadow-xl mt-3 mb-6">
+        <div class="card-body p-3 sm:p-6">
+          <h2 class="card-title text-lg sm:text-xl mb-3">
+            Ambiance & conduite d'équipe
+          </h2>
+          <p class="text-xs sm:text-sm">
+            On compte sur chacune pour entretenir une ambiance bienveillante,
+            basée sur l'évolution continue, l'entraide et la bonne humeur.
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-xs sm:text-sm mt-2">
+            <li>
+              Si des comportements dépassent les limites acceptables, les
+              capitaines et le coach se réservent le droit de sanctionner et
+              de rappeler à l'ordre la ou les joueuses concernées.
+            </li>
+            <li>La résolution des problèmes en privé est privilégiée.</li>
+            <li>
+              L'équipe entière ne doit pas s'impliquer dans des conflits, que
+              ce soit sur le terrain, au sein de l'équipe, ou avec des
+              adversaires.
+            </li>
+            <li>
+              Les capitaines sont les seules responsables d'apaiser les
+              tensions sur le terrain, afin d'éviter l'escalade et de
+              permettre une résolution calme des conflits.
+            </li>
+          </ul>
         </div>
       </div>
     </div>
@@ -785,7 +817,7 @@ Replace with:
 
 Start the local server and open `index.html` (see Manual Verification Setup, works without a DB for this task — no API calls involved):
 1. Confirm three tabs are visible: "Équipe", "Présences", "Fonctionnement".
-2. Click "Fonctionnement": confirm it shows exactly four cards, in order: "Règles de sélection" (selection rules plus the Monday-reminder/Thursday-screenshot paragraph, the schedule-change rule, the 75%-attendance clarification, and the coach-training/friendly-match paragraph), "Equipement" (jersey/skirt rules), "Cotisations" (payment schedule/consequences plus the referee dues-reduction sentence), and "Organisation & matériel" (shared responsibility for referees/equipment), and that the tab button gets the active style.
+2. Click "Fonctionnement": confirm it shows exactly five cards, in order: "Règles de sélection" (selection rules plus the Monday-reminder/Thursday-screenshot paragraph, the schedule-change rule, the 75%-attendance clarification, and the coach-training/friendly-match paragraph), "Equipement" (jersey/skirt rules), "Cotisations" (payment schedule/consequences plus the referee dues-reduction sentence), "Organisation & matériel" (shared responsibility for referees/equipment), and "Ambiance & conduite d'équipe" (team-conduct policy), and that the tab button gets the active style.
 3. Click back to "Équipe": confirm the "Presences"/"Équipement" cards are gone from this tab, that Thunes now includes the 1-mètre-de-bière sentence, and that Thunes, Arbitrage (with its copy button from Task 2), and Notes are still present and in the same relative order.
 4. Click "Présences": confirm the existing attendance table tab is unaffected.
 
