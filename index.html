@@ -1680,12 +1680,11 @@
 
       // ===================== REFEREES =====================
       const MATCH_DATES = [
-        "2025-03-08",
-        "2025-03-22",
-        "2025-04-05",
-        "2025-04-12",
-        "2025-04-19",
-        "2025-05-24",
+        { date: "2026-09-01", time: "15:00" },
+        { date: "2026-09-20", time: "15:00" },
+        { date: "2026-10-04", time: "13:00" },
+        { date: "2026-11-15", time: "16:30" },
+        { date: "2026-11-22", time: "16:30" },
       ];
 
       async function addReferee() {
@@ -1715,11 +1714,13 @@
         await renderReferees();
       }
 
-      function formatMatchDate(dateStr) {
+      function formatMatchDate(dateStr, timeStr) {
         const d = new Date(dateStr + "T00:00:00");
-        return d
+        const datePart = d
           .toLocaleDateString("fr-BE", { day: "numeric", month: "short" })
           .replace(".", "");
+        const timePart = timeStr ? " " + timeStr.replace(":", "h") : "";
+        return datePart + timePart;
       }
 
       async function renderReferees() {
@@ -1733,7 +1734,7 @@
         document.getElementById("referee-calendar-head").innerHTML =
           "<tr><th></th>" +
           MATCH_DATES.map(
-            (d) => `<th class="text-center text-xs">${formatMatchDate(d)}</th>`,
+            (d) => `<th class="text-center text-xs">${formatMatchDate(d.date, d.time)}</th>`,
           ).join("") +
           "</tr>";
 
@@ -1743,8 +1744,8 @@
             '<tr><td class="font-medium text-xs whitespace-nowrap">Arb. ' +
             (i + 1) +
             "</td>";
-          MATCH_DATES.forEach((date) => {
-            const refs = byDate[date] || [];
+          MATCH_DATES.forEach((m) => {
+            const refs = byDate[m.date] || [];
             const ref = refs[i];
             if (ref) {
               const phoneLink = ref.phone
@@ -1768,9 +1769,9 @@
         select.innerHTML =
           '<option value="" disabled selected>Choisir...</option>' +
           MATCH_DATES.map((d) => {
-            const count = (byDate[d] || []).length;
+            const count = (byDate[d.date] || []).length;
             const full = count >= 2;
-            return `<option value="${d}" ${full ? "disabled" : ""}>${formatMatchDate(d)}${full ? " (complet)" : ""}</option>`;
+            return `<option value="${d.date}" ${full ? "disabled" : ""}>${formatMatchDate(d.date, d.time)}${full ? " (complet)" : ""}</option>`;
           }).join("");
         if (
           currentVal &&
