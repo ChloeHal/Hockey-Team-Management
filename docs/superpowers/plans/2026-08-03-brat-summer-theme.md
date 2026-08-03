@@ -17,6 +17,7 @@
 - No new fonts loaded over the network — Arial Narrow/Arial are system fonts.
 - `output.css` is a build artifact — never hand-edit it; always regenerate via `npm run build`.
 - `<body class="bg-base-200 min-h-screen">` in both `index.html` and `coach.html` — `base-200` is the literal page-background color, not a spare card tone. It must be the acid lime (`#8ace00`), the same value as `primary`/`accent`, so the page backdrop is lime per the approved design (verified by rendering, not just reading the diff — see Task 1 Step 4). `base-100` (cream) is reserved for card/navbar/tab surfaces sitting on top of that backdrop. `base-200` is also used for a few in-card callout boxes (e.g. "Regles de selection", "Compte commun Revolut") and hover states — these becoming lime accents against their cream card background is an intended, approved side effect, not a bug.
+- Two `collapse` wrappers hold dense tabular/list data and must use `bg-base-100` (cream), never `bg-base-200` (lime) — DaisyUI's `table-zebra` stripes even rows with the same `--b2` token as the wrapper, so a lime wrapper cancels the zebra contrast entirely: `index.html`'s "Détail (tableau)" collapse (the match-sheet table) and `coach.html`'s "Detail (raisons)" collapse (selected/deliberation/excluded player lists). Found by rendering the collapse open, not visible in a collapsed screenshot or in a diff.
 
 ---
 
