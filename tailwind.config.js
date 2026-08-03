@@ -4,7 +4,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Rubik"', 'sans-serif'],
+        sans: ['"Arial Narrow"', "Arial", 'sans-serif'],
       },
     },
   },
@@ -13,18 +13,18 @@ module.exports = {
     themes: [
       {
         bouncyclassic: {
-          "primary": "oklch(72% 0.219 149.579)",
-          "primary-content": "oklch(27% 0.105 12.094)",
-          "secondary": "oklch(62% 0.194 149.214)",
-          "secondary-content": "oklch(27% 0.046 192.524)",
-          "accent": "oklch(62% 0.214 259.815)",
-          "accent-content": "oklch(26% 0.079 36.259)",
-          "neutral": "oklch(35% 0.144 278.697)",
-          "neutral-content": "oklch(96% 0.018 272.314)",
-          "base-100": "oklch(98% 0.002 247.839)",
-          "base-200": "oklch(96% 0.003 264.542)",
-          "base-300": "oklch(92% 0.006 264.531)",
-          "base-content": "oklch(37% 0.146 265.522)",
+          "primary": "#8ace00",
+          "primary-content": "#111111",
+          "secondary": "#8ace00",
+          "secondary-content": "#111111",
+          "accent": "#8ace00",
+          "accent-content": "#111111",
+          "neutral": "#1a1a1a",
+          "neutral-content": "#faf9f2",
+          "base-100": "#faf9f2",
+          "base-200": "#f0efe6",
+          "base-300": "#e4e2d4",
+          "base-content": "#1a1a1a",
           "info": "oklch(68% 0.169 237.323)",
           "info-content": "oklch(97% 0.013 236.62)",
           "success": "oklch(69% 0.17 162.48)",
