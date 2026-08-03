@@ -4,7 +4,7 @@
 
 **Goal:** Add a "copy open referee dates" button to the Arbitrage card, split static team-rules content into a new "Fonctionnement" tab, and update the hardcoded match dates to the new season (with kickoff times shown throughout).
 
-**Architecture:** Single-file change to `index.html` (vanilla JS + Tailwind/DaisyUI, no build step, no backend/DB change). Three sequential tasks: (1) change `MATCH_DATES` to carry a time and update `formatMatchDate` accordingly, (2) add the copy button which depends on the new date/time format, (3) add a third tab and move two static cards into it.
+**Architecture:** Single-file change to `index.html` (vanilla JS + Tailwind/DaisyUI, no build step, no backend/DB change). Three sequential tasks: (1) change `MATCH_DATES` to carry a time and update `formatMatchDate` accordingly, (2) add the copy button which depends on the new date/time format, (3) add a third tab, move two static cards into it, and add a new "Cotisations" rules card plus a paragraph on the Monday-reminder/Thursday-screenshot attendance process.
 
 **Tech Stack:** Vanilla JS, Tailwind + DaisyUI classes, `navigator.clipboard` API. No automated test framework exists in this repo — verification is manual, done by serving the app locally and exercising it in a browser.
 
@@ -19,6 +19,8 @@
   - `2026-11-15` at `16:30`
   - `2026-11-22` at `16:30`
 - Renamed card title: the card with selection rules must be titled **"Règles de sélection"** (not "Presences") once moved, to avoid confusion with the existing "Présences" tab (attendance table).
+- The "Fonctionnement" tab must include a new "Cotisations" card with this exact policy: cotisations are requested at 3 points in the year — start of season (team charges), end of Q1 (Lucas + Q2 dues), end of year (Q2 of Lucas's coaching) — payment plans are allowed, but absent any captain being informed in advance, the assumption is a 1-month payment window, and missing it means the player cannot participate in matches.
+- The "Règles de sélection" card must include this exact policy in addition to the existing selection-rules content: a reminder is sent every Monday, a screenshot of availabilities is taken every Thursday to hold each player accountable for entering availability in advance, and selection is based on those screenshots.
 - Changes apply to `index.html` only, not `coach.html`.
 
 ## Manual Verification Setup
@@ -364,7 +366,7 @@ EOF
 - Modify: `index.html:146-167` (tablist — add third tab button)
 - Modify: `index.html:276-339` (remove "Presences" rules card from the Équipe tab)
 - Modify: `index.html:375-385` (remove "Équipement" card from the Équipe tab)
-- Modify: `index.html:673` area (insert new `page-fonctionnement` container with the two moved cards, renamed)
+- Modify: `index.html:673` area (insert new `page-fonctionnement` container with the two moved cards, renamed, plus a new "Cotisations" card)
 - Modify: `index.html:710-723` (`switchTab` — handle third state)
 
 **Interfaces:**
@@ -565,6 +567,19 @@ Replace with:
             l'entrainement...
           </p>
 
+          <div class="alert alert-info mt-3">
+            <div>
+              <span class="text-sm"
+                >Un rappel est envoyé tous les <strong>lundis</strong>, et un
+                <strong>screenshot</strong> des disponibilités est pris chaque
+                <strong>jeudi</strong> pour responsabiliser chaque joueuse à
+                encoder ses présences à l'avance — cela aide énormément à
+                l'organisation des matchs. <strong>La sélection se base sur
+                ces screenshots.</strong></span
+              >
+            </div>
+          </div>
+
           <div class="bg-base-200 rounded-lg p-3 sm:p-4 mt-3">
             <h3 class="font-bold mb-2 text-sm sm:text-base">
               Regles de selection
@@ -596,13 +611,40 @@ Replace with:
       </div>
 
       <!-- Équipement -->
-      <div class="card bg-base-100 shadow-xl mt-3 mb-6">
+      <div class="card bg-base-100 shadow-xl mt-3">
         <div class="card-body p-3 sm:p-6">
           <h2 class="card-title text-lg sm:text-xl mb-3">Equipement</h2>
           <p class="text-xs sm:text-sm">
             Le maillot vert du club, les chaussettes et la jupe bleu marine sont
             <strong>obligatoires</strong>. Si tu ne les as pas encore commandes,
             n'oublie pas de regarder si ton numero est disponible.
+          </p>
+        </div>
+      </div>
+
+      <!-- Cotisations -->
+      <div class="card bg-base-100 shadow-xl mt-3 mb-6">
+        <div class="card-body p-3 sm:p-6">
+          <h2 class="card-title text-lg sm:text-xl mb-3">Cotisations</h2>
+          <p class="text-xs sm:text-sm">
+            Des cotisations seront demandées à plusieurs moments de l'année :
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-xs sm:text-sm mt-2">
+            <li>En début de saison, pour les charges de l'équipe.</li>
+            <li>
+              Fin du 1er trimestre (Q1), pour payer Lucas et la cotisation du
+              2e trimestre (Q2).
+            </li>
+            <li>
+              En fin d'année, pour payer le 2e trimestre (Q2) de coaching de
+              Lucas.
+            </li>
+          </ul>
+          <p class="mt-3 text-xs sm:text-sm">
+            Des plans de paiement échelonnés peuvent être mis en place. Si
+            aucune capitaine n'a été mise au courant, on considère que la
+            somme peut être payée en 1 mois. Si ce délai n'est pas respecté,
+            la joueuse ne pourra pas participer aux matchs.
           </p>
         </div>
       </div>
@@ -660,7 +702,7 @@ Replace with:
 
 Start the local server and open `index.html` (see Manual Verification Setup, works without a DB for this task — no API calls involved):
 1. Confirm three tabs are visible: "Équipe", "Présences", "Fonctionnement".
-2. Click "Fonctionnement": confirm it shows exactly two cards, "Règles de sélection" (with the selection-rules content) and "Equipement" (jersey/skirt rules), and that the tab button gets the active style.
+2. Click "Fonctionnement": confirm it shows exactly three cards, "Règles de sélection" (with the selection-rules content, including the Monday reminder / Thursday screenshot paragraph), "Equipement" (jersey/skirt rules), and "Cotisations" (payment schedule/consequences), and that the tab button gets the active style.
 3. Click back to "Équipe": confirm the "Presences"/"Équipement" cards are gone from this tab, and that Thunes, Arbitrage (with its copy button from Task 2), and Notes are still present and in the same relative order.
 4. Click "Présences": confirm the existing attendance table tab is unaffected.
 
