@@ -400,6 +400,14 @@
             </table>
           </div>
 
+          <button
+            id="copy-referee-dates-btn"
+            class="btn btn-outline btn-sm w-full mt-3"
+            onclick="copyOpenRefereeDates()"
+          >
+            Copier les dates à couvrir
+          </button>
+
           <!-- Formulaire ajout arbitre -->
           <div class="flex flex-col gap-2 mt-4">
             <div class="flex gap-2">
@@ -1679,6 +1687,8 @@
       }
 
       // ===================== REFEREES =====================
+      let openRefereeDates = [];
+
       const MATCH_DATES = [
         { date: "2026-09-01", time: "15:00" },
         { date: "2026-09-20", time: "15:00" },
@@ -1779,6 +1789,49 @@
         ) {
           select.value = currentVal;
         }
+
+        openRefereeDates = MATCH_DATES.filter(
+          (d) => (byDate[d.date] || []).length < 2,
+        );
+        updateCopyRefereeButton();
+      }
+
+      function updateCopyRefereeButton() {
+        const btn = document.getElementById("copy-referee-dates-btn");
+        if (openRefereeDates.length === 0) {
+          btn.disabled = true;
+          btn.textContent = "Toutes les dates sont couvertes 👍";
+        } else {
+          btn.disabled = false;
+          btn.textContent = "Copier les dates à couvrir";
+        }
+      }
+
+      async function copyTextToClipboard(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return;
+        }
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+
+      async function copyOpenRefereeDates() {
+        if (openRefereeDates.length === 0) return;
+        const text = openRefereeDates
+          .map((d) => formatMatchDate(d.date, d.time))
+          .join(", ");
+        await copyTextToClipboard(text);
+        const btn = document.getElementById("copy-referee-dates-btn");
+        btn.textContent = "Copié !";
+        setTimeout(updateCopyRefereeButton, 1500);
       }
 
       // ===================== RENDER ALL =====================
