@@ -26,7 +26,8 @@
 - The existing "only trainings really and entirely followed count" bullet must be clarified in place (not contradicted) to say attendance counts starting from 75% participation in the training.
 - The "Fonctionnement" tab must include a new "Organisation & matériel" card with this exact policy: everyone is responsible for matches running smoothly, including finding referees and managing equipment bags; the goalie must always know where her bag is but isn't responsible for permanently storing it at home; captains must know where the ball bag is but aren't required to retrieve it themselves; the team must find a storage location between uses and stay attentive to future needs.
 - The Thunes card (which stays on the Équipe/home tab, unchanged in position) must state: the team commits to offering opponents 1 "mètre" of beer, and if soft drinks are requested, they replace the beers from the meter.
-- The "Fonctionnement" tab must include a new "Ambiance & conduite d'équipe" card with this exact policy: everyone is counted on to maintain a caring atmosphere based on continuous improvement, mutual help, and good mood; captains and the coach reserve the right to sanction/reprimand players whose behavior exceeds acceptable limits; private resolution of issues is preferred; the whole team must not get involved in conflicts (on the field, within the team, or with opponents); captains alone are responsible for defusing on-field tension, to avoid escalation and allow calm conflict resolution.
+- The "Fonctionnement" tab must include a new "Ambiance & conduite d'équipe" card with this exact policy: everyone is counted on to maintain a caring atmosphere based on continuous improvement, mutual help, and good mood; captains and the coach reserve the right to sanction/reprimand players whose behavior exceeds acceptable limits; private resolution of issues is preferred; the whole team must not get involved in conflicts (on the field, within the team, or with opponents); captains alone are responsible for defusing on-field tension, to avoid escalation and allow calm conflict resolution. It must also state: lateness to a training or match should not be shared on public channels unless it impacts the team, in order to preserve a positive and motivating dynamic for the rest of the group.
+- The "only trainings really and entirely followed count" bullet must not contradict the adjacent 75%-participation clarification — drop "entièrement" rather than keep both, since "entirely" and "starting from 75%" cannot both be literally true.
 - Changes apply to `index.html` only, not `coach.html`.
 
 ## Manual Verification Setup
@@ -551,7 +552,7 @@ Replace with:
               class="link link-primary"
               >ici</a
             >
-            et puis tu telecharges l'<a
+            et puis tu télécharges l'<a
               href="https://apps.apple.com/be/app/hockey-belgium/id1413161236?l=fr-FR"
               target="_blank"
               class="link link-primary"
@@ -563,15 +564,15 @@ Replace with:
             <div>
               <span class="text-sm"
                 >Il est <strong>indispensable</strong> de mettre ses
-                disponibilites sur l'application <em>Hockey Belgium</em> !</span
+                disponibilités sur l'application <em>Hockey Belgium</em> !</span
               >
             </div>
           </div>
 
           <p class="mt-2 text-xs sm:text-sm">
             C'est super important parce que chercher du renfort ne se fait pas
-            en derniere minute et ca permet egalement d'adapter
-            l'entrainement...
+            en dernière minute et ça permet également d'adapter
+            l'entraînement...
           </p>
 
           <div class="alert alert-info mt-3">
@@ -589,29 +590,29 @@ Replace with:
 
           <div class="bg-base-200 rounded-lg p-3 sm:p-4 mt-3">
             <h3 class="font-bold mb-2 text-sm sm:text-base">
-              Regles de selection
+              Règles de sélection
             </h3>
             <ul class="list-disc list-inside space-y-1 text-xs sm:text-sm">
               <li>
-                La selection se fait sur base des
-                <strong>3 derniers entrainements</strong>.
+                La sélection se fait sur base des
+                <strong>3 derniers entraînements</strong>.
               </li>
               <li>
-                En cas d'egalite, on regarde les
-                <strong>5 derniers entrainements</strong>.
+                En cas d'égalité, on regarde les
+                <strong>5 derniers entraînements</strong>.
               </li>
               <li>
-                S'il y a encore egalite : priorite au
+                S'il y a encore égalité : priorité au
                 <strong>placement</strong>, puis au <strong>niveau</strong>.
               </li>
               <li>
                 Aucune excuse n'est prise en compte pour les absences : statut
-                etudiant, travail, blessure, maladie, etc.
+                étudiant, travail, blessure, maladie, etc.
               </li>
               <li>
-                Seuls les entrainements reellement et entierement suivis
-                comptent (une presence est comptee a partir de
-                <strong>75% de participation</strong> a l'entrainement).
+                Seuls les entraînements réellement suivis comptent (une
+                présence est comptée à partir de
+                <strong>75% de participation</strong> à l'entraînement).
               </li>
             </ul>
           </div>
@@ -629,9 +630,9 @@ Replace with:
           </p>
 
           <p class="mt-3 text-xs sm:text-sm">
-            Tout entraînement (physique ou normal) ainsi que tout match
-            amical organisé par le coach est pris en compte dans les
-            présences.
+            En dehors de ces changements ponctuels, les entraînements
+            organisés par le coach (physique ou normal) ainsi que les matchs
+            amicaux qu'il organise comptent également dans les présences.
           </p>
         </div>
       </div>
@@ -734,6 +735,12 @@ Replace with:
               Les capitaines sont les seules responsables d'apaiser les
               tensions sur le terrain, afin d'éviter l'escalade et de
               permettre une résolution calme des conflits.
+            </li>
+            <li>
+              En cas de retard à un entraînement ou à un match, il n'est pas
+              recommandé de le partager sur les canaux publics, sauf si cela
+              a un impact sur l'équipe — cela permet de garder une dynamique
+              positive et motivante pour le reste du groupe.
             </li>
           </ul>
         </div>
