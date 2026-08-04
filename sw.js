@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pantheres-v1';
+const CACHE_NAME = 'pantheres-v2';
 const ASSETS = [
   './',
   './index.html',

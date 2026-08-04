@@ -1,11 +1,12 @@
 <?php
 // Connexion MySQL - A remplir avec les identifiants Hostinger
 // hPanel > Bases de donnees > creer une base, puis copier les infos ici
+// Copier ce fichier en config.php et remplir les vraies valeurs (config.php n'est pas versionne)
 
 $db_host = 'localhost';
-$db_name = 'u103504870_panthers';  // nom de la base de donnees
-$db_user = 'u103504870_panthers';  // nom d'utilisateur
-$db_pass = '***REDACTED***';  // mot de passe
+$db_name = '';  // nom de la base de donnees
+$db_user = '';  // nom d'utilisateur
+$db_pass = '';  // mot de passe
 
 try {
     $pdo = new PDO(
